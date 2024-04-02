@@ -19,6 +19,9 @@ def mark_anomaly_based_on_threshold(waveform_group, cycle_length):
     cycles = len(waveform_group) // cycle_length
     anomalies = 0
     
+
+
+    
     for i in range(cycles):
         cycle_start = i * cycle_length
         cycle_end = (i + 1) * cycle_length

@@ -28,3 +28,30 @@
 [12-Bert 关系识别](./12-Bert%20关系识别)
 
 [13-Bert+CRF 三元组识别](./13-Bert+CRF%20三元组识别)
+
+
+# 克隆远程仓库
+git clone https://github.com/
+# 添加修改的文件
+git add . / xxx.py
+# 提交修改
+git commit -m "tttttt"
+# 推送到远程
+git push
+
+# 去除本地与远程的关联关系
+git remote remove origin
+
+# 将本地仓库与远端关联
+git remote add origin http://xxx
+
+PS E:\实验2\程序代码> cd .\Pytorch-NLP\     
+PS E:\实验2\程序代码\Pytorch-NLP> mkdir test
+
+
+    目录: E:\实验2\程序代码\Pytorch-NLP
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----          2024/4/3      1:08                test
