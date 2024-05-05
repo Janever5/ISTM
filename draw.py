@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 
 def plot_data_from_folder(input_folder):
     for file_name in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_name)
+        if file_name != "knee.txt":
+            continue
+        file_path = os.path.join(input_folder, file_name)  
         x_values = []
         y_values = []
 
@@ -15,7 +17,6 @@ def plot_data_from_folder(input_folder):
                     y_values.append(float(columns[1]))
 
         plt.plot(x_values, y_values, label=file_name)
-        break
 
     plt.xlabel('X轴标签')
     plt.ylabel('Y轴标签')
