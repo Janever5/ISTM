@@ -3,10 +3,9 @@ from keras.models import Sequential
 from keras.layers import Bidirectional, LSTM, Dense
 from keras.optimizers import Adam
 import matplotlib.pyplot as plt
-
 # 生成模拟波形数据
 def generate_waveform(cycle_length, num_cycles):
-    t = np.linspace(0, 2 * np.pi * num_cycles, cycle_length * num_cycles)
+    t = np.linspace(0, 2 * np.pi * num_-cycles, cycle_length * num_cycles)
     waveform = np.sin(t)
     return waveform
 
