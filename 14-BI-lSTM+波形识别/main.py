@@ -32,12 +32,12 @@ def create_newdata(waveform, window_size):
     return np.array(features)
 
 # Read waveform data
-waveform = read_waveform_from_txt('data/knee.txt')
+waveform = read_waveform_from_txt('data/nodding.txt')
 
 # Define window size and known time periods of normal and anomaly data
 window_size = 100
-normal_indices = list(range(1000, 2000))  # Time period of 10-30s
-anomaly_indices = list(range(3000, 4000))  # Time period of 40-50s
+normal_indices = list(range(2000, 3000))  # Time period of 10-30s
+anomaly_indices = list(range(3000, 9000))  # Time period of 40-50s
 
 # Create features and labels
 X, y = create_features_and_labels(waveform, window_size, normal_indices, anomaly_indices)
@@ -62,7 +62,7 @@ plt.xlabel('Time')
 plt.ylabel('Amplitude')
 plt.title('Waveform Data with Predicted Anomalies')
 for anomaly in anomalies:
-    if anomaly < 1000:
+    if anomaly < 2000:
        continue
     plt.axvspan(anomaly , (anomaly + 1) , color='red', alpha=0.3)
 plt.show()

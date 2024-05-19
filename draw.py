@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 import os
 import matplotlib.pyplot as plt
 
-def plot_data_from_files(folder):
+def plot_data_from_files(folder,inside_name):
     """从指定文件夹中的文件绘制数据"""
     for file_name in os.listdir(folder):
+        if inside_name != '' and inside_name not in file_name:
+            continue
         if file_name.startswith('filtered_') and file_name.endswith('.txt'):
             file_path = os.path.join(folder, file_name)
             x_values = []
@@ -50,4 +52,4 @@ def filter_and_save_data_per_file(input_folder, output_folder):
 input_folder = "./data"
 output_folder = "./data_filtered"
 filter_and_save_data_per_file(input_folder, output_folder)
-plot_data_from_files(output_folder)
+plot_data_from_files(output_folder,"")
