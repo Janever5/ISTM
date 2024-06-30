@@ -43,7 +43,10 @@ def filter_and_save_data_per_file(input_folder, output_folder):
                     columns = line.split('\t')
                     x = float(columns[0])
                     y = float(columns[1])
-                    if 10 <= x <= 22:
+                    if 10 <= x <= 22 and 'heart' not in file_name.lower():
+                        # 将符合条件的数据点写入对应的新文件
+                        output_file.write(f"{x}\t{y}\n")
+                    elif 'heart' in file_name and 1<=x <= 13:
                         # 将符合条件的数据点写入对应的新文件
                         output_file.write(f"{x}\t{y}\n")
             

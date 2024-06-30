@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-def generate_and_split_noisy_files(input_folder, num_variations=10, noise_std=0.01):
+def generate_and_split_noisy_files(input_folder, num_variations=100, noise_std=0.503):
     """
     为指定文件夹中的每个txt文件创建训练集和测试集文件夹，
     并在这些文件夹中生成带有噪声的数据文件。只对文件中的第二列数据添加高斯噪声。
@@ -37,7 +37,7 @@ def generate_and_split_noisy_files(input_folder, num_variations=10, noise_std=0.
                 noisy_data.iloc[:, 1] += noise
                 
                 # 确定文件的目标文件夹（训练集或测试集）
-                target_folder = train_folder if i <= 8 else test_folder
+                target_folder = train_folder if i <= 80 else test_folder
                 
                 # 构建新文件名并保存
                 new_filename = f"{base_name}_noisy_{i}.txt"
