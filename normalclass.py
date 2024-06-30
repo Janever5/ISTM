@@ -89,7 +89,7 @@ def predict_category_and_name(model, file_path, window_size):
 
 # 示例使用
 folder_path = './Dataset_Folders/Training_Set'  # 指定数据文件夹路径
-window_size = 100
+window_size = 800
 normal_indices = list(range(0, 3000))
 anomaly_indices = list(range(3000, 4000))
 
