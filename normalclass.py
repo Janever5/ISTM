@@ -68,7 +68,7 @@ def process_files_and_train(folder_path, window_size, normal_indices, anomaly_in
     
     X_train, X_test, y_train, y_test = train_test_split(X_all, y_all, test_size=0.2, random_state=42)
     
-    model = LogisticRegression(max_iter=1000, multi_class='multinomial', solver='lbfgs')
+    model = LogisticRegression(max_iter=20, multi_class='multinomial', solver='lbfgs')
     model.fit(X_train, y_train)
     
     return model, X_train, X_test, y_train, y_test
@@ -92,7 +92,7 @@ def plot_confusion_matrix(y_true, y_pred, category_names, title='Confusion Matri
 
 # Example usage
 folder_path = './Dataset_Folders/Training_Set'
-window_size = 600
+window_size = 1000
 normal_indices = list(range(0, 3000))
 anomaly_indices = list(range(3000, 4000))
 
