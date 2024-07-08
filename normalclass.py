@@ -89,34 +89,36 @@ def plot_confusion_matrix(y_true, y_pred, category_names, title='Confusion Matri
     plt.ylabel('True')
     plt.title(title)
     plt.show()
+    
+if __name__ == '__main__':
 
-# Example usage
-folder_path = './Dataset_Folders/Training_Set'
-window_size = 1000
-normal_indices = list(range(0, 3000))
-anomaly_indices = list(range(3000, 4000))
+    # Example usage
+    folder_path = './Dataset_Folders/Training_Set'
+    window_size = 1000
+    normal_indices = list(range(0, 3000))
+    anomaly_indices = list(range(3000, 4000))    
 
-model, X_train, X_test, y_train, y_test = process_files_and_train(folder_path, window_size, normal_indices, anomaly_indices)
+    model, X_train, X_test, y_train, y_test = process_files_and_train(folder_path, window_size, normal_indices, anomaly_indices)    
 
-# Predict on training data to generate confusion matrix
-y_train_pred = model.predict(X_train)
-category_names = {1: 'finger', 2: 'elbow', 3: 'knee', 4: 'swallow', 5: 'heart'}
+    # Predict on training data to generate confusion matrix
+    y_train_pred = model.predict(X_train)
+    category_names = {1: 'finger', 2: 'elbow', 3: 'knee', 4: 'swallow', 5: 'heart'}    
 
-# Plot confusion matrix for training data
-# plot_confusion_matrix(y_train, y_train_pred, category_names, title='Training Confusion Matrix')
+    # Plot confusion matrix for training data
+    # plot_confusion_matrix(y_train, y_train_pred, category_names, title='Training Confusion Matrix')    
 
-# Predict on test data to generate confusion matrix
-y_test_pred = model.predict(X_test)
+    # Predict on test data to generate confusion matrix
+    y_test_pred = model.predict(X_test)    
 
-# Plot confusion matrix for test data
-plot_confusion_matrix(y_test, y_test_pred, category_names, title='Test Confusion Matrix')
+    # Plot confusion matrix for test data
+    plot_confusion_matrix(y_test, y_test_pred, category_names, title='Test Confusion Matrix')    
 
-# Test accuracy
-test_accuracy = accuracy_score(y_test, y_test_pred)
-print(f"Test accuracy: {test_accuracy}")
+    # Test accuracy
+    test_accuracy = accuracy_score(y_test, y_test_pred)
+    print(f"Test accuracy: {test_accuracy}")    
 
-# Predict category of a test file
-test_file = './Dataset_Folders/Test_Set/filtered_swallow_noisy_9.txt'
-predicted_category_id = predict_category_and_name(model, test_file, window_size)
-predicted_category = category_names.get(predicted_category_id, 'unknown')
-print(f"Predicted category: {predicted_category}")
+    # Predict category of a test file
+    test_file = './Dataset_Folders/Test_Set/filtered_swallow_noisy_9.txt'
+    predicted_category_id = predict_category_and_name(model, test_file, window_size)
+    predicted_category = category_names.get(predicted_category_id, 'unknown')
+    print(f"Predicted category: {predicted_category}")
