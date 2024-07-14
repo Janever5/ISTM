@@ -10,12 +10,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from normalclass import assign_category, read_waveform_from_txt, create_newdata, create_features_and_labels
 
+from tensorflow.keras.optimizers import Adam
+
 def build_bilstm_model(window_size, num_classes):
     model = Sequential()
-    model.add(Bidirectional(LSTM(5, return_sequences=True), input_shape=(window_size, 1)))
-    model.add(Dropout(0.5))
-    model.add(Bidirectional(LSTM(5)))
-    model.add(Dropout(0.5))
+    model.add(Bidirectional(LSTM(8, return_sequences=True), input_shape=(window_size, 1)))
+    model.add(Dropout(0.1)) # 试试0.1，0.2
+    model.add(Bidirectional(LSTM(8))) # 修改层数
+    model.add(Dropout(0.1))
     model.add(Dense(num_classes, activation='softmax'))
     return model
 
@@ -52,9 +54,19 @@ def process_files_and_train(folder_path, window_size, normal_indices, anomaly_in
     y_train_onehot = to_categorical(y_train, num_classes=num_classes)
     y_test_onehot = to_categorical(y_test, num_classes=num_classes)
 
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # 实例化Adam优化器并设置学习率
+    optimizer_bz = Adam(learning_rate=0.0001)
 
-    history = model.fit(X_train, y_train_onehot, epochs=100, batch_size=32, validation_data=(X_test, y_test_onehot))
+    model.compile(loss='categorical_crossentropy', 
+                  optimizer=optimizer_bz, 
+                  metrics=['accuracy'])
+
+    history = model.fit(X_train, 
+                        y_train_onehot, 
+                        epochs=50,
+                        batch_size=128, 
+                        validation_data=(X_test, y_test_onehot))
+    # batch size: [16,32,64,128,256]
 
     plot_training_history(history,'training_history')
     save_training_history(history, 'training_history.npz')
@@ -122,7 +134,28 @@ def plot_confusion_matrix(y_true, y_pred, category_mapping, title='Confusion Mat
     if save_path:
         plt.savefig(save_path + '.png')
     plt.close()
+
+def plot_confusion_matrix_bz(y_true, y_pred, category_mapping, title='Confusion Matrix', save_path=None):
+    category_names = {v: k for k, v in category_mapping.items()}
+    cm = confusion_matrix(y_true, y_pred, labels=list(category_names.keys()))
     
+    # 使用"Purples"颜色映射，从白色到深紫色
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Purples', 
+                xticklabels=category_names.values(), yticklabels=category_names.values())
+    
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title(title)
+    
+    if save_path:
+        plt.savefig(save_path + '.png')
+    plt.close()
+
+# 示例调用函数（假设你有y_true, y_pred, 和 category_mapping）
+# plot_confusion_matrix(y_true, y_pred, category_mapping, save_path='./confusion_matrix')
+
+
 if __name__ == '__main__':
 
     folder_path = './Dataset_Folders/Training_Set'
@@ -134,8 +167,8 @@ if __name__ == '__main__':
     y_train_pred_classes = np.argmax(y_train_pred, axis=1)    
     y_test_pred = model.predict(X_test)
     y_test_pred_classes = np.argmax(y_test_pred, axis=1)    
-    plot_confusion_matrix(y_train, y_train_pred_classes, category_mapping, title='Training Confusion Matrix',save_path='confusion_matrix_train')
-    plot_confusion_matrix(y_test, y_test_pred_classes, category_mapping, title='Test Confusion Matrix',save_path='confusion_matrix_test')    
+    plot_confusion_matrix_bz(y_train, y_train_pred_classes, category_mapping, title='Training Confusion Matrix',save_path='confusion_matrix_train')
+    plot_confusion_matrix_bz(y_test, y_test_pred_classes, category_mapping, title='Test Confusion Matrix',save_path='confusion_matrix_test')    
     test_accuracy = accuracy_score(y_test, y_test_pred_classes)
     print(f"Test accuracy: {test_accuracy}")    
     # test_file = './Dataset_Folders/Test_Set/filtered_swallow_noisy_9.txt'
