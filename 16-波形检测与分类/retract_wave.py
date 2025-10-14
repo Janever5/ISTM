@@ -82,30 +82,47 @@ class WaveformClusterClassifier:
         logger.info(f"{INFO} 使用设备: {self.device}")
 
     # -------------------------- 1. 数据加载与预处理 --------------------------
-    def load_csv_data(self):
-        """加载数据并保存原始数据可视化结果"""
+    def load_csv_data(self,start_time, end_time):
+        """加载数据并保存原始数据可视化结果（仅保留30-50秒的数据）"""
         try:
             with open(self.csv_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
                 data_header_idx = next(i for i, line in enumerate(lines) 
                                       if line.strip().startswith("Time(S),Current(A)"))
+
+            # 读取完整数据
             df = pd.read_csv(self.csv_path, skiprows=data_header_idx, header=0, dtype=np.float64)
-            self.time = df["Time(S)"].values
-            self.current = df["Current(A)"].values
-            
-            # 保存原始数据CSV
-            df.to_csv(os.path.join(self.subdirs["raw"], "raw_data.csv"), index=False)
-            
-            # 绘制原始数据波形图
+
+            # 过滤30-50秒的数据
+            time_filter = (df["Time(S)"] >= start_time) & (df["Time(S)"] <= end_time)
+            df_filtered = df[time_filter].copy()
+
+            # 检查过滤后的数据是否为空
+            if df_filtered.empty:
+                logger.warning(f"{WARNING} 30-50秒范围内未找到数据")
+                return False
+
+            # 保存过滤后的数据
+            self.time = df_filtered["Time(S)"].values
+            self.current = df_filtered["Current(A)"].values
+
+            # 保存过滤后的原始数据CSV
+            df_filtered.to_csv(os.path.join(self.subdirs["raw"], "raw_data_filtered.csv"), index=False)
+            # 同时保存完整原始数据供参考
+            df.to_csv(os.path.join(self.subdirs["raw"], "raw_data_full.csv"), index=False)
+
+            # 绘制过滤后的原始数据波形图
             plt.figure(figsize=(12, 5))
             plt.plot(self.time, self.current, color="#3498db")
-            plt.title("原始电流波形数据", fontsize=14)
+            plt.axvline(x=30, color='r', linestyle='--', label='30s')
+            plt.axvline(x=50, color='g', linestyle='--', label='50s')
+            plt.title("30-50秒原始电流波形数据", fontsize=14)
             plt.xlabel("时间(S)"), plt.ylabel("电流(A)")
-            plt.grid(alpha=0.3), plt.tight_layout()
-            plt.savefig(os.path.join(self.subdirs["raw"], "raw_waveform.png"))
+            plt.legend(), plt.grid(alpha=0.3), plt.tight_layout()
+            plt.savefig(os.path.join(self.subdirs["raw"], "raw_waveform_filtered.png"))
             plt.close()
-            
-            logger.info(f"{SUCCESS} 加载数据：{len(self.time)}个采样点，时间范围 {self.time[0]:.2f}~{self.time[-1]:.2f}S")
+
+            logger.info(f"{SUCCESS} 加载并过滤数据：{len(self.time)}个采样点，时间范围 {self.time[0]:.2f}~{self.time[-1]:.2f}S")
             return True
         except Exception as e:
             logger.error(f"{ERROR} 数据加载失败：{str(e)}")
@@ -159,7 +176,7 @@ class WaveformClusterClassifier:
                 else:
                     valley_count += 1
                 
-                if peak_count >= 3 and valley_count >= 3:
+                if peak_count >= 2 and valley_count >= 2:
                     # 提取周期数据
                     cycle_time = self.time[cycle_start:idx+1]
                     cycle_current = self.current[cycle_start:idx+1]
@@ -257,12 +274,14 @@ class WaveformClusterClassifier:
             np.median(cycle_norm),        # 中位数
             np.sum(np.abs(np.diff(cycle_norm)))  # 一阶差分和（反映变化率）
         ]
-        
-        # 2. 频域特征（5个）
-        freq, psd = welch(cycle_norm, fs=100)
+
+        # 2. 频域特征（5个）- 修复警告
+        # 确保nperseg不超过输入长度
+        nperseg = min(256, len(cycle_norm))  # 关键修改
+        freq, psd = welch(cycle_norm, fs=100, nperseg=nperseg)  # 增加参数
         top5_freq_idx = np.argsort(psd)[-5:]
         freq_features = psd[top5_freq_idx].tolist()
-        
+
         # 3. 波形形态特征（2个）
         peaks, _ = find_peaks(cycle_norm)
         valleys, _ = find_peaks(-cycle_norm)
@@ -270,12 +289,17 @@ class WaveformClusterClassifier:
             len(peaks),  # 波峰数量
             len(valleys)  # 波谷数量
         ]
-        
+
         return np.array(time_features + freq_features + shape_features)  # 共15个特征
 
     def cluster_cycles(self, max_cluster=10):
         """聚类并保存详细聚类过程数据"""
         try:
+            # 检查周期数量是否足够
+            if len(self.cycles) < 3:  # 至少需要3个样本才能聚类
+                logger.error(f"{ERROR} 聚类失败：周期数量太少（{len(self.cycles)}个），至少需要3个")
+                return False
+                
             # 提取特征
             cycle_features = np.array([self.extract_cycle_features(c[2]) for c in self.cycles])
             cycle_features = self.scaler.fit_transform(cycle_features)
@@ -292,10 +316,16 @@ class WaveformClusterClassifier:
                     os.path.join(self.subdirs["cluster"], "pca_features.csv"), index=False)
                 logger.info(f"{INFO} PCA降维完成：{self.pca_model.n_features_} → {self.pca_components}维，"
                            f"解释方差比：{sum(self.pca_model.explained_variance_ratio_):.3f}")
-
+    
             # 聚类与轮廓系数计算
+            # 调整最大聚类数不超过样本数-1
+            max_possible_k = min(max_cluster, len(self.cycles) - 1)
+            if max_possible_k < 2:
+                logger.error(f"{ERROR} 聚类失败：样本数量不足，无法进行有效聚类")
+                return False
+                
             sil_scores = []
-            k_range = range(2, max_cluster + 1)
+            k_range = range(2, max_possible_k + 1)  # 使用调整后的范围
             for k in k_range:
                 kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
                 labels = kmeans.fit_predict(cycle_features)
@@ -428,25 +458,38 @@ class WaveformClusterClassifier:
                 for i in range(len(self.cycles))
             ])
             
-            # 提取特征
-            cycles_norm = np.array([c[2] for c in self.cycles])
+            # 检查查类别分布
+            unique, counts = np.unique(labels, return_counts=True)
+            class_counts = dict(zip(unique, counts))
+            logger.info(f"{INFO} 类别分布: {class_counts}")
             
-            # 划分数据集
+            # 处理样本数量不平衡问题
+            test_size = 0.3
+            stratify = labels if all(v >= 2 for v in class_counts.values()) else None
+            if stratify is None:
+                logger.warning(f"{WARNING} 某些类别样本数少于2，将不使用分层抽样")
+            
+            # 划分数据集（根据类别分布决定是否使用分层抽样）
             X_train, X_test, y_train, y_test = train_test_split(
-                cycles_norm, labels, test_size=0.3, random_state=42, stratify=labels
+                np.array([c[2] for c in self.cycles]), 
+                labels, 
+                test_size=test_size, 
+                random_state=42, 
+                stratify=stratify  # 只有当所有类别都有足够样本时才使用分层抽样
             )
             
             # 保存数据集划分
             pd.DataFrame({
-                "cycle_id": range(1, len(cycles_norm)+1),
-                "dataset": ["train" if i in X_train else "test" for i in range(len(cycles_norm))],
+                "cycle_id": range(1, len(labels)+1),
+                "dataset": ["train" if i in np.where(np.isin(labels, y_train))[0] else "test" 
+                           for i in range(len(labels))],
                 "label": labels
             }).to_csv(os.path.join(self.subdirs["ml"], "dataset_split.csv"), index=False)
             
             # 创建数据加载器
             self.train_dataset = self.WaveformDataset(X_train, y_train)
             self.test_dataset = self.WaveformDataset(X_test, y_test)
-            self.infer_dataset = self.WaveformDataset(cycles_norm, labels)
+            self.infer_dataset = self.WaveformDataset(np.array([c[2] for c in self.cycles]), labels)
             
             self.train_loader = DataLoader(self.train_dataset, batch_size=8, shuffle=True)
             self.test_loader = DataLoader(self.test_dataset, batch_size=8, shuffle=False)
@@ -459,47 +502,86 @@ class WaveformClusterClassifier:
             logger.error(f"{ERROR} ML数据准备失败：{str(e)}")
             return False
 
+    def evaluate_model(self):
+        """详细评估模型并保存混淆矩阵（修复标签不匹配问题）"""
+        self.model.eval()
+        correct = 0
+        total = 0
+        all_preds = []
+        all_labels = []
+
+        with torch.no_grad():
+            for inputs, labels in self.test_loader:
+                inputs, labels = inputs.to(self.device), labels.squeeze().to(self.device)
+                outputs = self.model(inputs)
+                _, preds = torch.max(outputs, 1)
+
+                correct += (preds == labels).sum().item()
+                total += labels.size(0)
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+
+        # 计算混淆矩阵
+        cm = confusion_matrix(all_labels, all_preds)
+
+        # 修复：确保标签与实际存在的类别一致
+        unique_labels = np.unique(np.concatenate([all_labels, all_preds]))
+        display_labels = ["正常", "异常"] if len(unique_labels) >= 2 else ["正常"]
+
+        plt.figure(figsize=(8, 6))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=display_labels)
+        disp.plot(cmap=plt.cm.Blues, ax=plt.gca())
+        plt.title("测试集混淆矩阵", fontsize=14)
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.subdirs["ml"], "confusion_matrix.png"))
+        plt.close()
+
+        # 同时修复学习率调度器警告
+        return 100 * correct / total
+
     def train_transformer(self, epochs=20, lr=1e-3, patience=5):
-        """增强模型训练过程，添加学习率调度和早停机制"""
+        """增强模型训练过程，修复学习率调度器警告"""
         try:
             self.model = self.TransformerClassifier(input_len=self.fixed_len).to(self.device)
             self.criterion = nn.CrossEntropyLoss()
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
+
+            # 修复：移除verbose参数以消除警告
             self.scheduler = ReduceLROnPlateau(
-                self.optimizer, mode='max', factor=0.5, patience=3, verbose=True
+                self.optimizer, mode='max', factor=0.5, patience=3  # 移除verbose=True
             )  # 学习率调度器
-            
+
             self.train_losses = []
             self.test_accuracies = []
             best_test_acc = 0.0
             early_stop_counter = 0  # 早停计数器
-            
+
             for epoch in range(epochs):
                 # 训练阶段
                 self.model.train()
                 train_loss = 0.0
                 for inputs, labels in self.train_loader:
                     inputs, labels = inputs.to(self.device), labels.squeeze().to(self.device)
-                    
+
                     self.optimizer.zero_grad()
                     outputs = self.model(inputs)
                     loss = self.criterion(outputs, labels)
                     loss.backward()
                     self.optimizer.step()
-                    
+
                     train_loss += loss.item() * inputs.size(0)
-                
+
                 # 计算训练指标
                 avg_train_loss = train_loss / len(self.train_loader.dataset)
                 self.train_losses.append(avg_train_loss)
-                
+
                 # 测试阶段
                 test_acc = self.evaluate_model()
                 self.test_accuracies.append(test_acc)
-                
+
                 # 学习率调度
                 self.scheduler.step(test_acc)
-                
+
                 # 早停检查
                 if test_acc > best_test_acc:
                     best_test_acc = test_acc
@@ -510,12 +592,12 @@ class WaveformClusterClassifier:
                     if early_stop_counter >= patience:
                         logger.info(f"{INFO} 早停触发：在第{epoch+1}轮未提升")
                         break
-                
+                    
                 logger.info(f"Epoch {epoch+1:2d}/{epochs} | 训练损失: {avg_train_loss:.4f} | 测试精度: {test_acc:.1f}%")
-            
+
             # 保存训练曲线
             self.plot_training_curves()
-            
+
             # 保存最终模型
             torch.save(self.model.state_dict(), os.path.join(self.subdirs["models"], "final_transformer.pth"))
             logger.info(f"{SUCCESS} 模型训练完成，最优精度：{best_test_acc:.1f}%")
@@ -544,37 +626,7 @@ class WaveformClusterClassifier:
         plt.savefig(os.path.join(self.subdirs["ml"], "training_curves.png"))
         plt.close()
 
-    def evaluate_model(self):
-        """详细评估模型并保存混淆矩阵"""
-        self.model.eval()
-        correct = 0
-        total = 0
-        all_preds = []
-        all_labels = []
-        
-        with torch.no_grad():
-            for inputs, labels in self.test_loader:
-                inputs, labels = inputs.to(self.device), labels.squeeze().to(self.device)
-                outputs = self.model(inputs)
-                _, preds = torch.max(outputs, 1)
-                
-                correct += (preds == labels).sum().item()
-                total += labels.size(0)
-                all_preds.extend(preds.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
-        
-        # 计算混淆矩阵
-        cm = confusion_matrix(all_labels, all_preds)
-        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["正常", "异常"])
-        
-        plt.figure(figsize=(8, 6))
-        disp.plot(cmap=plt.cm.Blues, ax=plt.gca())
-        plt.title("测试集混淆矩阵", fontsize=14)
-        plt.tight_layout()
-        plt.savefig(os.path.join(self.subdirs["ml"], "confusion_matrix.png"))
-        plt.close()
-        
-        return 100 * correct / total
+
 
     def infer_with_model(self):
         """推理并保存ML分类结果的详细对比"""
@@ -715,7 +767,7 @@ if __name__ == "__main__":
     # 配置参数
     CSV_PATH = "16-波形检测与分类\\knee-sensor\\内翻-0-1.csv"  # 替换为实际路径
     MAX_CLUSTER = 10
-    EPOCHS = 20
+    EPOCHS = 50
     USE_PCA = False  # 是否启用PCA降维
     PCA_COMPONENTS = 5  # PCA主成分数量
 
@@ -730,7 +782,7 @@ if __name__ == "__main__":
     # 执行完整流程
     try:
         # 步骤1：数据加载与预处理
-        if not processor.load_csv_data():
+        if not processor.load_csv_data(start_time=20, end_time=130):
             raise Exception("数据加载失败")
         if not processor.detect_peaks_valleys(peak_thr=0.2, valley_thr=0.2, min_dist=20):
             raise Exception("波峰波谷检测失败")
