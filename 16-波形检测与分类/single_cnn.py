@@ -309,13 +309,13 @@ def main(file_path, window_size=50, step_size=25, epochs=100,
 
 # -------------------------- 执行 --------------------------
 if __name__ == "__main__":
-    FILE_PATH = r"16-波形检测与分类\knee-sensor\内翻-0-1.csv"
+    FILE_PATH = r"16-波形检测与分类\knee-sensor\外旋-90.csv"
     main(
         file_path=FILE_PATH,
         window_size=50,
-        step_size=25,
-        epochs=100,
-        start_time=80,
-        end_time=100,
-        threshold_percentile=90
+        step_size=50,
+        epochs=200,
+        start_time=30,
+        end_time=150,
+        threshold_percentile=80
     )

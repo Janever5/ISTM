@@ -243,3 +243,312 @@ weighted avg       0.75      0.87      0.80        15
 2025-10-19 02:23:47,396 - INFO - ✅ Detection done | Threshold: 1.697924 | Normal: 6, Abnormal: 1
 2025-10-19 02:23:51,250 - INFO - ✅ Saved 6 normal and 1 abnormal segments (with plots)
 2025-10-19 02:23:51,251 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:29:21,530 - INFO - ============================================================
+2025-10-19 02:29:21,531 - INFO - 📁 Output directory structure:
+2025-10-19 02:29:21,531 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:29:21,531 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:29:21,532 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:29:21,532 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:29:21,532 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:29:21,532 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:29:21,532 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:29:21,532 - INFO - ============================================================
+2025-10-19 02:29:21,533 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:29:21,892 - INFO - ✅ Loaded 701 points, range [60.00, 130.00]s
+2025-10-19 02:29:21,899 - INFO - ✅ Generated 10 windows (size=250, step=50)
+2025-10-19 02:29:23,169 - INFO - 🚀 Training on cpu for 100 epochs
+2025-10-19 02:29:23,209 - INFO - Epoch   1/100 | Loss: 0.813356
+2025-10-19 02:29:23,488 - INFO - Epoch  20/100 | Loss: 0.306226
+2025-10-19 02:29:23,784 - INFO - Epoch  40/100 | Loss: 0.293888
+2025-10-19 02:29:24,084 - INFO - Epoch  60/100 | Loss: 0.288687
+2025-10-19 02:29:24,399 - INFO - Epoch  80/100 | Loss: 0.286376
+2025-10-19 02:29:24,747 - INFO - Epoch 100/100 | Loss: 0.284836
+2025-10-19 02:29:24,754 - INFO - ✅ Model saved
+2025-10-19 02:29:24,767 - INFO - ✅ Detection done | Threshold: 0.366108 | Normal: 8, Abnormal: 2
+2025-10-19 02:29:28,136 - INFO - ✅ Saved 8 normal and 2 abnormal segments (with plots)
+2025-10-19 02:29:28,136 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:30:25,502 - INFO - ============================================================
+2025-10-19 02:30:25,502 - INFO - 📁 Output directory structure:
+2025-10-19 02:30:25,502 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:30:25,503 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:30:25,503 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:30:25,503 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:30:25,503 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:30:25,503 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:30:25,504 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:30:25,504 - INFO - ============================================================
+2025-10-19 02:30:25,504 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:30:25,899 - INFO - ✅ Loaded 701 points, range [60.00, 130.00]s
+2025-10-19 02:30:25,906 - INFO - ✅ Generated 14 windows (size=50, step=50)
+2025-10-19 02:30:27,226 - INFO - 🚀 Training on cpu for 100 epochs
+2025-10-19 02:30:27,259 - INFO - Epoch   1/100 | Loss: 1.112954
+2025-10-19 02:30:27,577 - INFO - Epoch  20/100 | Loss: 0.359573
+2025-10-19 02:30:27,909 - INFO - Epoch  40/100 | Loss: 0.342673
+2025-10-19 02:30:28,203 - INFO - Epoch  60/100 | Loss: 0.334501
+2025-10-19 02:30:28,518 - INFO - Epoch  80/100 | Loss: 0.330846
+2025-10-19 02:30:28,850 - INFO - Epoch 100/100 | Loss: 0.328372
+2025-10-19 02:30:28,856 - INFO - ✅ Model saved
+2025-10-19 02:30:28,864 - INFO - ✅ Detection done | Threshold: 0.766264 | Normal: 11, Abnormal: 3
+2025-10-19 02:30:33,049 - INFO - ✅ Saved 11 normal and 3 abnormal segments (with plots)
+2025-10-19 02:30:33,049 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:37:25,699 - INFO - ============================================================
+2025-10-19 02:37:25,701 - INFO - 📁 Output directory structure:
+2025-10-19 02:37:25,702 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:37:25,703 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:37:25,703 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:37:25,704 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:37:25,704 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:37:25,705 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:37:25,705 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:37:25,706 - INFO - ============================================================
+2025-10-19 02:37:25,706 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:37:26,282 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 02:37:26,294 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 02:37:28,013 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 02:37:28,204 - INFO - Epoch   1/200 | Loss: 0.918096
+2025-10-19 02:37:29,853 - INFO - Epoch  20/200 | Loss: 0.353832
+2025-10-19 02:37:31,022 - INFO - Epoch  40/200 | Loss: 0.320204
+2025-10-19 02:37:32,951 - INFO - Epoch  60/200 | Loss: 0.346615
+2025-10-19 02:37:34,140 - INFO - Epoch  80/200 | Loss: 0.317065
+2025-10-19 02:37:34,928 - INFO - Epoch 100/200 | Loss: 0.313999
+2025-10-19 02:37:35,540 - INFO - Epoch 120/200 | Loss: 0.298276
+2025-10-19 02:37:36,133 - INFO - Epoch 140/200 | Loss: 0.315302
+2025-10-19 02:37:36,733 - INFO - Epoch 160/200 | Loss: 0.321941
+2025-10-19 02:37:37,349 - INFO - Epoch 180/200 | Loss: 0.293526
+2025-10-19 02:37:37,916 - INFO - Epoch 200/200 | Loss: 0.266545
+2025-10-19 02:37:37,922 - INFO - ✅ Model saved
+2025-10-19 02:37:37,933 - INFO - ✅ Detection done | Threshold: 0.570149 | Normal: 19, Abnormal: 5
+2025-10-19 02:37:45,132 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 02:37:45,133 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:39:17,055 - INFO - ============================================================
+2025-10-19 02:39:17,056 - INFO - 📁 Output directory structure:
+2025-10-19 02:39:17,056 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:39:17,056 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:39:17,056 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:39:17,057 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:39:17,057 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:39:17,057 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:39:17,057 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:39:17,057 - INFO - ============================================================
+2025-10-19 02:39:17,057 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:39:17,445 - INFO - ✅ Loaded 959 points, range [30.00, 125.80]s
+2025-10-19 02:39:17,451 - INFO - ✅ Generated 19 windows (size=50, step=50)
+2025-10-19 02:39:18,652 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 02:39:18,721 - INFO - Epoch   1/200 | Loss: 0.704879
+2025-10-19 02:39:19,314 - INFO - Epoch  20/200 | Loss: 0.448788
+2025-10-19 02:39:19,887 - INFO - Epoch  40/200 | Loss: 0.337408
+2025-10-19 02:39:20,638 - INFO - Epoch  60/200 | Loss: 0.292630
+2025-10-19 02:39:21,301 - INFO - Epoch  80/200 | Loss: 0.415555
+2025-10-19 02:39:22,165 - INFO - Epoch 100/200 | Loss: 0.286150
+2025-10-19 02:39:22,950 - INFO - Epoch 120/200 | Loss: 0.270142
+2025-10-19 02:39:24,925 - INFO - Epoch 140/200 | Loss: 0.267024
+2025-10-19 02:39:26,642 - INFO - Epoch 160/200 | Loss: 0.223597
+2025-10-19 02:39:28,363 - INFO - Epoch 180/200 | Loss: 0.238241
+2025-10-19 02:39:30,477 - INFO - Epoch 200/200 | Loss: 0.227431
+2025-10-19 02:39:30,487 - INFO - ✅ Model saved
+2025-10-19 02:39:30,521 - INFO - ✅ Detection done | Threshold: 0.272738 | Normal: 15, Abnormal: 4
+2025-10-19 02:39:38,533 - INFO - ✅ Saved 15 normal and 4 abnormal segments (with plots)
+2025-10-19 02:39:38,534 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:46:03,331 - INFO - ============================================================
+2025-10-19 02:46:03,332 - INFO - 📁 Output directory structure:
+2025-10-19 02:46:03,333 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:46:03,333 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:46:03,333 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:46:03,334 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:46:03,334 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:46:03,335 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:46:03,335 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:46:03,335 - INFO - ============================================================
+2025-10-19 02:46:03,336 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:46:03,931 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 02:46:03,940 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 02:46:05,833 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 02:46:05,932 - INFO - Epoch   1/200 | Loss: 0.749846
+2025-10-19 02:46:07,695 - INFO - Epoch  20/200 | Loss: 0.191788
+2025-10-19 02:46:08,808 - INFO - Epoch  40/200 | Loss: 0.185217
+2025-10-19 02:46:10,462 - INFO - Epoch  60/200 | Loss: 0.214693
+2025-10-19 02:46:11,805 - INFO - Epoch  80/200 | Loss: 0.164206
+2025-10-19 02:46:13,381 - INFO - Epoch 100/200 | Loss: 0.170854
+2025-10-19 02:46:14,750 - INFO - Epoch 120/200 | Loss: 0.175203
+2025-10-19 02:46:16,031 - INFO - Epoch 140/200 | Loss: 0.172770
+2025-10-19 02:46:17,123 - INFO - Epoch 160/200 | Loss: 0.175954
+2025-10-19 02:46:18,754 - INFO - Epoch 180/200 | Loss: 0.155373
+2025-10-19 02:46:20,549 - INFO - Epoch 200/200 | Loss: 0.151398
+2025-10-19 02:46:20,561 - INFO - ✅ Model saved
+2025-10-19 02:46:20,584 - INFO - ✅ Detection done | Threshold: 0.278937 | Normal: 19, Abnormal: 5
+2025-10-19 02:46:30,745 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 02:46:30,745 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:51:05,239 - INFO - ============================================================
+2025-10-19 02:51:05,240 - INFO - 📁 Output directory structure:
+2025-10-19 02:51:05,240 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:51:05,240 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:51:05,241 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:51:05,241 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:51:05,241 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:51:05,241 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:51:05,242 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:51:05,242 - INFO - ============================================================
+2025-10-19 02:51:05,243 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:51:05,796 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 02:51:05,807 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 02:51:07,876 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 02:51:07,949 - INFO - Epoch   1/200 | Loss: 1.032094
+2025-10-19 02:51:09,138 - INFO - Epoch  20/200 | Loss: 0.093878
+2025-10-19 02:51:10,473 - INFO - Epoch  40/200 | Loss: 0.092641
+2025-10-19 02:51:12,081 - INFO - Epoch  60/200 | Loss: 0.070455
+2025-10-19 02:51:14,170 - INFO - Epoch  80/200 | Loss: 0.086587
+2025-10-19 02:51:15,431 - INFO - Epoch 100/200 | Loss: 0.086674
+2025-10-19 02:51:16,907 - INFO - Epoch 120/200 | Loss: 0.073021
+2025-10-19 02:51:18,698 - INFO - Epoch 140/200 | Loss: 0.069395
+2025-10-19 02:51:20,261 - INFO - Epoch 160/200 | Loss: 0.111512
+2025-10-19 02:51:21,719 - INFO - Epoch 180/200 | Loss: 0.072705
+2025-10-19 02:51:23,061 - INFO - Epoch 200/200 | Loss: 0.072021
+2025-10-19 02:51:23,070 - INFO - ✅ Model saved
+2025-10-19 02:51:23,086 - INFO - ✅ Detection done | Threshold: 0.110098 | Normal: 19, Abnormal: 5
+2025-10-19 02:51:33,496 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 02:51:33,496 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 02:53:15,592 - INFO - ============================================================
+2025-10-19 02:53:15,594 - INFO - 📁 Output directory structure:
+2025-10-19 02:53:15,595 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 02:53:15,595 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 02:53:15,596 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 02:53:15,596 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 02:53:15,596 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 02:53:15,597 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 02:53:15,597 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 02:53:15,598 - INFO - ============================================================
+2025-10-19 02:53:15,598 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 02:53:16,238 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 02:53:16,249 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 02:53:18,068 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 02:53:18,236 - INFO - Epoch   1/200 | Loss: 0.528838
+2025-10-19 02:53:20,813 - INFO - Epoch  20/200 | Loss: 0.191738
+2025-10-19 02:53:23,281 - INFO - Epoch  40/200 | Loss: 0.106728
+2025-10-19 02:53:26,154 - INFO - Epoch  60/200 | Loss: 0.115969
+2025-10-19 02:53:28,880 - INFO - Epoch  80/200 | Loss: 0.136236
+2025-10-19 02:53:31,287 - INFO - Epoch 100/200 | Loss: 0.151295
+2025-10-19 02:53:33,803 - INFO - Epoch 120/200 | Loss: 0.115055
+2025-10-19 02:53:36,531 - INFO - Epoch 140/200 | Loss: 0.130745
+2025-10-19 02:53:38,728 - INFO - Epoch 160/200 | Loss: 0.223061
+2025-10-19 02:53:41,417 - INFO - Epoch 180/200 | Loss: 0.113143
+2025-10-19 02:53:43,931 - INFO - Epoch 200/200 | Loss: 0.132092
+2025-10-19 02:53:43,940 - INFO - ✅ Model saved
+2025-10-19 02:53:43,956 - INFO - ✅ Detection done | Threshold: 0.250277 | Normal: 19, Abnormal: 5
+2025-10-19 02:53:53,338 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 02:53:53,339 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 03:50:56,767 - INFO - ============================================================
+2025-10-19 03:50:56,769 - INFO - 📁 Output directory structure:
+2025-10-19 03:50:56,769 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 03:50:56,769 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 03:50:56,769 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 03:50:56,769 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 03:50:56,769 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 03:50:56,769 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 03:50:56,769 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 03:50:56,769 - INFO - ============================================================
+2025-10-19 03:50:56,769 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 03:50:57,107 - INFO - ✅ Loaded 507 points, range [30.00, 80.60]s
+2025-10-19 03:50:57,107 - INFO - ✅ Generated 10 windows (size=50, step=50)
+2025-10-19 03:50:58,260 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 03:50:58,294 - INFO - Epoch   1/200 | Loss: 1.142516
+2025-10-19 03:50:58,643 - INFO - Epoch  20/200 | Loss: 0.005828
+2025-10-19 03:50:58,909 - INFO - Epoch  40/200 | Loss: 0.003145
+2025-10-19 03:50:59,230 - INFO - Epoch  60/200 | Loss: 0.002766
+2025-10-19 03:50:59,518 - INFO - Epoch  80/200 | Loss: 0.002634
+2025-10-19 03:50:59,791 - INFO - Epoch 100/200 | Loss: 0.002551
+2025-10-19 03:51:00,067 - INFO - Epoch 120/200 | Loss: 0.002499
+2025-10-19 03:51:00,337 - INFO - Epoch 140/200 | Loss: 0.002472
+2025-10-19 03:51:00,617 - INFO - Epoch 160/200 | Loss: 0.002452
+2025-10-19 03:51:00,913 - INFO - Epoch 180/200 | Loss: 0.002438
+2025-10-19 03:51:01,210 - INFO - Epoch 200/200 | Loss: 0.002431
+2025-10-19 03:51:01,215 - INFO - ✅ Model saved
+2025-10-19 03:51:01,223 - INFO - ✅ Detection done | Threshold: 0.004024 | Normal: 8, Abnormal: 2
+2025-10-19 03:51:04,216 - INFO - ✅ Saved 8 normal and 2 abnormal segments (with plots)
+2025-10-19 03:51:04,216 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 03:51:58,711 - INFO - ============================================================
+2025-10-19 03:51:58,711 - INFO - 📁 Output directory structure:
+2025-10-19 03:51:58,711 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 03:51:58,711 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 03:51:58,711 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 03:51:58,711 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 03:51:58,711 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 03:51:58,711 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 03:51:58,711 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 03:51:58,711 - INFO - ============================================================
+2025-10-19 03:51:58,711 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 03:51:59,084 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 03:51:59,084 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 03:52:00,264 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 03:52:00,325 - INFO - Epoch   1/200 | Loss: 0.671902
+2025-10-19 03:52:00,823 - INFO - Epoch  20/200 | Loss: 0.107626
+2025-10-19 03:52:01,329 - INFO - Epoch  40/200 | Loss: 0.128689
+2025-10-19 03:52:01,823 - INFO - Epoch  60/200 | Loss: 0.101759
+2025-10-19 03:52:02,317 - INFO - Epoch  80/200 | Loss: 0.090221
+2025-10-19 03:52:02,833 - INFO - Epoch 100/200 | Loss: 0.096392
+2025-10-19 03:52:03,346 - INFO - Epoch 120/200 | Loss: 0.119535
+2025-10-19 03:52:03,894 - INFO - Epoch 140/200 | Loss: 0.124666
+2025-10-19 03:52:04,411 - INFO - Epoch 160/200 | Loss: 0.107424
+2025-10-19 03:52:04,923 - INFO - Epoch 180/200 | Loss: 0.120756
+2025-10-19 03:52:05,407 - INFO - Epoch 200/200 | Loss: 0.119961
+2025-10-19 03:52:05,407 - INFO - ✅ Model saved
+2025-10-19 03:52:05,426 - INFO - ✅ Detection done | Threshold: 0.140921 | Normal: 19, Abnormal: 5
+2025-10-19 03:52:11,468 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 03:52:11,468 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 03:53:26,439 - INFO - ============================================================
+2025-10-19 03:53:26,439 - INFO - 📁 Output directory structure:
+2025-10-19 03:53:26,439 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 03:53:26,439 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 03:53:26,439 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 03:53:26,439 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 03:53:26,439 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 03:53:26,439 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 03:53:26,439 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 03:53:26,439 - INFO - ============================================================
+2025-10-19 03:53:26,439 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 03:53:26,809 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 03:53:26,826 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 03:53:28,076 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 03:53:28,151 - INFO - Epoch   1/200 | Loss: 0.862655
+2025-10-19 03:53:28,728 - INFO - Epoch  20/200 | Loss: 0.326222
+2025-10-19 03:53:29,318 - INFO - Epoch  40/200 | Loss: 0.306051
+2025-10-19 03:53:29,897 - INFO - Epoch  60/200 | Loss: 0.319642
+2025-10-19 03:53:30,506 - INFO - Epoch  80/200 | Loss: 0.313224
+2025-10-19 03:53:31,082 - INFO - Epoch 100/200 | Loss: 0.312665
+2025-10-19 03:53:31,661 - INFO - Epoch 120/200 | Loss: 0.312657
+2025-10-19 03:53:32,241 - INFO - Epoch 140/200 | Loss: 0.263807
+2025-10-19 03:53:32,863 - INFO - Epoch 160/200 | Loss: 0.260685
+2025-10-19 03:53:33,412 - INFO - Epoch 180/200 | Loss: 0.253578
+2025-10-19 03:53:34,034 - INFO - Epoch 200/200 | Loss: 0.339691
+2025-10-19 03:53:34,034 - INFO - ✅ Model saved
+2025-10-19 03:53:34,056 - INFO - ✅ Detection done | Threshold: 0.571400 | Normal: 19, Abnormal: 5
+2025-10-19 03:53:40,631 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 03:53:40,631 - INFO - 🎉 Done! Check output folders for results.
+2025-10-19 03:54:38,828 - INFO - ============================================================
+2025-10-19 03:54:38,828 - INFO - 📁 Output directory structure:
+2025-10-19 03:54:38,828 - INFO -   raw             -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\0_raw_data
+2025-10-19 03:54:38,828 - INFO -   windows         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\1_sliding_windows
+2025-10-19 03:54:38,828 - INFO -   model           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\2_model
+2025-10-19 03:54:38,828 - INFO -   results         -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\3_detection_results
+2025-10-19 03:54:38,828 - INFO -   normal          -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\4_normal_segments
+2025-10-19 03:54:38,828 - INFO -   abnormal        -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\5_abnormal_segments
+2025-10-19 03:54:38,828 - INFO -   plots           -> D:\实验2\程序代码\Pytorch-NLP\cnn_waveform_results\6_visualizations
+2025-10-19 03:54:38,828 - INFO - ============================================================
+2025-10-19 03:54:38,828 - INFO - 🎯 Starting waveform anomaly detection...
+2025-10-19 03:54:39,156 - INFO - ✅ Loaded 1201 points, range [30.00, 150.00]s
+2025-10-19 03:54:39,156 - INFO - ✅ Generated 24 windows (size=50, step=50)
+2025-10-19 03:54:40,319 - INFO - 🚀 Training on cpu for 200 epochs
+2025-10-19 03:54:40,390 - INFO - Epoch   1/200 | Loss: 0.755829
+2025-10-19 03:54:40,950 - INFO - Epoch  20/200 | Loss: 0.056727
+2025-10-19 03:54:41,562 - INFO - Epoch  40/200 | Loss: 0.049052
+2025-10-19 03:54:42,155 - INFO - Epoch  60/200 | Loss: 0.044888
+2025-10-19 03:54:42,782 - INFO - Epoch  80/200 | Loss: 0.038896
+2025-10-19 03:54:43,355 - INFO - Epoch 100/200 | Loss: 0.044548
+2025-10-19 03:54:43,953 - INFO - Epoch 120/200 | Loss: 0.033525
+2025-10-19 03:54:44,515 - INFO - Epoch 140/200 | Loss: 0.036892
+2025-10-19 03:54:45,147 - INFO - Epoch 160/200 | Loss: 0.034569
+2025-10-19 03:54:45,720 - INFO - Epoch 180/200 | Loss: 0.037408
+2025-10-19 03:54:46,261 - INFO - Epoch 200/200 | Loss: 0.055101
+2025-10-19 03:54:46,261 - INFO - ✅ Model saved
+2025-10-19 03:54:46,283 - INFO - ✅ Detection done | Threshold: 0.058788 | Normal: 19, Abnormal: 5
+2025-10-19 03:54:53,195 - INFO - ✅ Saved 19 normal and 5 abnormal segments (with plots)
+2025-10-19 03:54:53,195 - INFO - 🎉 Done! Check output folders for results.
