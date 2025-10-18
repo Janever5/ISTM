@@ -692,10 +692,10 @@ def main(csv_path, fixed_len=200, start_time=80, end_time=130, dominant_threshol
 if __name__ == "__main__":
     CSV_PATH = "16-波形检测与分类\\knee-sensor\\内翻-0-1.csv"
     FIXED_LEN = 200
-    START_TIME = 40
-    END_TIME = 130
-    DOMINANT_THRESHOLD = 0.5
-    MIN_DIST = 10
+    START_TIME = 40 # 需要改时间
+    END_TIME = 130 # 需要改时间
+    DOMINANT_THRESHOLD = 0.5 # 需要改，正常波的占比
+    MIN_DIST = 10   # 需要改，峰谷横坐标间距
     
     main(
         csv_path=CSV_PATH,
