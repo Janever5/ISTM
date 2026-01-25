@@ -14,11 +14,23 @@ import zipfile
 import threading
 import time
 
+# 统一的波形序列长度（保留更多时间细节）
+TARGET_LENGTH = 100
+
 # 添加当前目录到Python路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # 导入模型定义
-from waveform_classifier import MGTransformer, WaveformDataset, train_model, predict_waveform
+from waveform_classifier import MGTransformer, WaveformDataset, train_model, predict_waveform, load_standard_waveforms
+
+# 在文件开头添加标准波形库加载
+def initialize_system():
+    """初始化系统，加载标准波形库"""
+    try:
+        load_standard_waveforms()
+        print("✅ 标准波形库加载成功")
+    except Exception as e:
+        print(f"⚠️  标准波形库加载失败: {e}")
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
@@ -63,30 +75,36 @@ def static_files(path):
 @app.route('/api/upload_dataset', methods=['POST'])
 def upload_dataset():
     try:
-        if 'file' not in request.files:
+        if 'files' not in request.files and 'file' not in request.files:
             return jsonify({'success': False, 'error': '未找到文件'}), 400
         
-        file = request.files['file']
-        if file.filename == '':
+        # 处理单个文件上传的情况（原有的逻辑）
+        uploaded_files = []
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename != '':
+                uploaded_files.append(file)
+        
+        # 处理多个文件上传的情况
+        if 'files' in request.files:
+            files = request.files.getlist('files')
+            uploaded_files.extend(files)
+        
+        if not uploaded_files:
             return jsonify({'success': False, 'error': '未选择文件'}), 400
         
-        # 保存上传的文件
-        filename = file.filename
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+        # 创建一个临时数据集目录
+        dataset_path = os.path.join(app.config['UPLOAD_FOLDER'], 'dataset')
+        os.makedirs(dataset_path, exist_ok=True)
         
-        # 如果是zip文件，解压
-        if filename.endswith('.zip'):
-            with zipfile.ZipFile(file_path, 'r') as zip_ref:
-                zip_ref.extractall(os.path.join(app.config['UPLOAD_FOLDER'], 'dataset'))
-            os.remove(file_path)  # 删除zip文件
-            dataset_path = os.path.join(app.config['UPLOAD_FOLDER'], 'dataset')
-        else:
-            dataset_path = file_path
+        for file in uploaded_files:
+            filename = file.filename
+            file_path = os.path.join(dataset_path, filename)
+            file.save(file_path)
         
         return jsonify({
             'success': True, 
-            'message': '数据集上传成功',
+            'message': f'成功上传 {len(uploaded_files)} 个文件',
             'dataset_path': dataset_path
         })
     except Exception as e:
@@ -149,22 +167,35 @@ def upload_model():
 @app.route('/api/upload_file', methods=['POST'])
 def upload_file():
     try:
-        if 'file' not in request.files:
+        if 'files' not in request.files and 'file' not in request.files:
             return jsonify({'success': False, 'error': '未找到文件'}), 400
         
-        file = request.files['file']
-        if file.filename == '':
+        # 处理单个文件上传的情况
+        uploaded_files = []
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename != '':
+                uploaded_files.append(file)
+        
+        # 处理多个文件上传的情况
+        if 'files' in request.files:
+            files = request.files.getlist('files')
+            uploaded_files.extend(files)
+        
+        if not uploaded_files:
             return jsonify({'success': False, 'error': '未选择文件'}), 400
         
-        # 保存上传的文件
-        filename = file.filename
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+        file_paths = []
+        for file in uploaded_files:
+            filename = file.filename
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            file_paths.append(file_path)
         
         return jsonify({
             'success': True, 
-            'message': '文件上传成功',
-            'file_path': file_path
+            'message': f'成功上传 {len(uploaded_files)} 个文件',
+            'file_paths': file_paths
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -205,6 +236,8 @@ def train():
                     training_status['message'] = f'训练中... Epoch: {epoch+1}/{total_epochs}'
                     log_msg = f"Epoch [{epoch+1}/{total_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.4f}"
                     training_status['logs'].append(log_msg)
+                    
+                    
                     
                     # 更新图表数据
                     training_status['chart_data']['epochs'].append(epoch + 1)
@@ -333,6 +366,7 @@ def predict():
 
 def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=None, loaded_scaler=None, label_names=None):
     """对单个波形文件进行分类预测"""
+    
     # 加载并预处理数据
     file_extension = Path(file_path).suffix.lower()
     
@@ -362,29 +396,48 @@ def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=
     
     current = df[current_col].values
     
-    # 统一长度为50
-    if len(current) >= 50:
-        current = current[:50]
+    # 统一长度为TARGET_LENGTH（100）
+    if len(current) >= TARGET_LENGTH:
+        current = current[:TARGET_LENGTH]
     else:
-        current = np.pad(current, (0, 50 - len(current)), mode="constant")
+        current = np.pad(current, (0, TARGET_LENGTH - len(current)), mode="constant")
     
     # 添加增强特征
     def _add_enhanced_features(seq):
-        current = seq
-        diff1 = np.diff(current, prepend=current[0])
-        diff2 = np.diff(diff1, prepend=diff1[0])
-        win_mean = np.convolve(current, np.ones(3)/3, mode='same')
-        peak_val = np.max(current)
-        valley_val = np.min(current)
-        peak_pos = np.argmax(current) / len(current)
+        """增强版特征提取，与waveform_classifier.py中的一致"""
+        # 原有特征
+        diff1 = np.diff(seq, prepend=seq[0])  # 一阶差分（速度）
+        diff2 = np.diff(diff1, prepend=diff1[0])  # 二阶差分（加速度）
+        win_mean = np.convolve(seq, np.ones(5)/5, mode='same')  # 平滑
         
-        peak_val_seq = np.full_like(current, peak_val)
-        peak_pos_seq = np.full_like(current, peak_pos)
-        valley_val_seq = np.full_like(current, valley_val)
+        # 新增特征 - 对区分速度很重要
+        # 1. 过零率（反映运动频率）
+        zero_crossings = np.where(np.diff(np.signbit(seq - np.mean(seq))))[0]
+        zero_cross_rate = len(zero_crossings) / len(seq)
+        zcr_seq = np.full_like(seq, zero_cross_rate)
+        
+        # 2. 能量包络
+        energy = np.abs(seq) ** 2
+        energy_envelope = np.convolve(energy, np.ones(10)/10, mode='same')
+        
+        # 3. 峰值特征
+        peak_val = np.max(seq)
+        peak_pos = np.argmax(seq) / len(seq)
+        valley_val = np.min(seq)
+        
+        # 4. 范围特征（区分30/60/90度）
+        range_val = peak_val - valley_val
+        range_seq = np.full_like(seq, range_val)
         
         return np.stack([
-            current, diff1, diff2, win_mean,
-            peak_val_seq, peak_pos_seq, valley_val_seq
+            seq,              # 原始信号
+            diff1,            # 速度
+            diff2,            # 加速度
+            win_mean,         # 平滑信号
+            energy_envelope,  # 能量包络
+            zcr_seq,          # 过零率
+            range_seq,        # 幅度范围
+            np.full_like(seq, peak_pos),  # 峰值位置
         ], axis=1)
     
     current = _add_enhanced_features(current)
@@ -412,7 +465,11 @@ def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=
     }
 
 if __name__ == '__main__':
+    # 初始化系统
+    initialize_system()
+    
     print("膝关节康复角度波形分类系统后端服务器启动中...")
     print("请访问 http://localhost:5000 查看前端界面")
     print("访问 http://localhost:5000?lang=en 查看英文界面")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    
+    app.run(host='0.0.0.0', port=5000, debug=False)

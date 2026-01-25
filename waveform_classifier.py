@@ -13,6 +13,16 @@ import json
 import re
 from scipy.signal import find_peaks
 
+# 导入所需的库
+from scipy import signal
+from scipy.signal import butter, filtfilt
+from fastdtw import fastdtw
+from scipy.spatial.distance import euclidean
+
+# 标准波形库（需要预先录制9种标准动作）
+STANDARD_WAVEFORMS = {}  # 在初始化时加载
+TARGET_LENGTH = 100  # 增加到100点以保留更多细节
+
 # 定义模型（MG-Transformer）
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=5000, dropout=0.1):
@@ -29,129 +39,225 @@ class PositionalEncoding(nn.Module):
         x = x + self.pe[:x.size(1)].transpose(0, 1)
         return self.dropout(x)
 
-class MGTransformer(nn.Module):
-    def __init__(self, d_model, nhead, dim_feedforward, num_layers, num_classes, 
-                 cnn_channels=128, dropout=0.1):
-        super().__init__()
-        # CNN特征提取器
-        self.cnn = nn.Sequential(
-            nn.Conv1d(in_channels=7, out_channels=cnn_channels//2, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.BatchNorm1d(cnn_channels//2),
-            nn.Conv1d(cnn_channels//2, cnn_channels, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm1d(cnn_channels),
-            nn.Conv1d(cnn_channels, d_model, kernel_size=3, padding=1),
-        )
-        
-        # 位置编码
-        self.pos_encoder = PositionalEncoding(d_model, dropout=dropout)
-        self.layer_norm = nn.LayerNorm(d_model)
-        
-        # Transformer编码器
-        encoder_layers = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward,
-            dropout=dropout, batch_first=True, norm_first=True
-        )
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers=num_layers)
-        
-        # 多尺度池化
-        self.pool = lambda x: torch.cat([
-            x.mean(dim=1),    # 平均池化
-            x.max(dim=1)[0],  # 最大池化
-            x.min(dim=1)[0]   # 最小池化
-        ], dim=1)
-        
-        # 分类器
-        self.classifier = nn.Sequential(
-            nn.Linear(3*d_model, 256),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, num_classes)
-        )
-        
-        self._init_weights()
 
-    def _init_weights(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
+def load_standard_waveforms(standard_dir='standard_waveforms'):
+    """加载9类标准波形用于评分比对"""
+    global STANDARD_WAVEFORMS
+    for label in ['30度快', '30度中', '30度慢', 
+                  '60度快', '60度中', '60度慢',
+                  '90度快', '90度中', '90度慢']:
+        file_path = os.path.join(standard_dir, f'{label}.csv')
+        if os.path.exists(file_path):
+            df = pd.read_csv(file_path)
+            STANDARD_WAVEFORMS[label] = df.iloc[:, 0].values
 
-    def forward(self, x):
-        # x shape: (batch, seq_len, features)
-        # 转换维度以适应CNN (batch, seq_len, features) -> (batch, features, seq_len)
-        x = x.transpose(1, 2)
-        x = self.cnn(x)
-        # 确保CNN输出形状正确
-        if x.dim() == 3:
-            # 转换回Transformer所需的维度 (batch, features, seq_len) -> (batch, seq_len, features)
-            x = x.transpose(1, 2)
-        # 位置编码和Transformer编码
-        x = self.pos_encoder(x)
-        x = self.transformer_encoder(x)
-        x = self.layer_norm(x)
-        # 池化和分类
-        x = self.pool(x)
-        logits = self.classifier(x)
-        return logits
+def calculate_rehab_score(patient_waveform, predicted_class):
+    """
+    计算康复评分 (0-100分)
+    使用DTW算法比较患者波形与标准波形的相似度
+    """
+    if predicted_class not in STANDARD_WAVEFORMS:
+        return -1, "无标准波形可供比对"
+    
+    standard = STANDARD_WAVEFORMS[predicted_class]
+    
+    # 统一长度
+    patient_resampled = signal.resample(patient_waveform, len(standard))
+    
+    # 计算DTW距离
+    distance, _ = fastdtw(patient_resampled, standard, dist=euclidean)
+    
+    # 距离转分数（需要根据实际数据范围调整）
+    max_distance = 1000  # 根据实际数据范围调整
+    score = max(0, 100 * (1 - distance / max_distance))
+    
+    # 生成评语
+    if score >= 90:
+        comment = "优秀！动作非常标准"
+    elif score >= 75:
+        comment = "良好，动作基本标准"
+    elif score >= 60:
+        comment = "一般，需要继续练习"
+    else:
+        comment = "需改进，建议在医生指导下练习"
+    
+    return round(score, 1), comment
 
-# 波形数据集处理类
+def preprocess_signal(data, fs=100):
+    """
+    信号预处理
+    fs: 采样频率 (Hz)
+    """
+    # 1. 去除NaN
+    data = np.nan_to_num(data, nan=np.nanmean(data))
+    
+    # 2. 低通滤波去除高频噪声（人体运动很少超过20Hz）
+    nyquist = fs / 2
+    cutoff = 20  # Hz
+    b, a = butter(4, cutoff / nyquist, btype='low')
+    data_filtered = filtfilt(b, a, data)
+    
+    # 3. 基线漂移校正
+    data_filtered = data_filtered - np.mean(data_filtered[:10])  # 减去起始基线
+    
+    return data_filtered
+
+def normalize_length(data_seq, target_length=TARGET_LENGTH):
+    """
+    使用重采样将波形统一到指定长度
+    - 保留完整波形形状
+    - 快速动作会被"拉伸"
+    - 慢速动作会被"压缩"
+    """
+    if len(data_seq) == target_length:
+        return data_seq
+    
+    # scipy.signal.resample 使用傅里叶方法进行重采样
+    resampled = signal.resample(data_seq, target_length)
+    return resampled
+
+def find_data_column(df):
+    """智能识别数据列"""
+    # 膝盖康复运动的典型列名
+    VALID_COLUMNS = [
+        'angle', '角度', 'deg', 'degree',           # 角度
+        'acc', 'accel', 'acceleration', '加速度',    # 加速度
+        'gyro', 'angular_velocity', '角速度',        # 角速度
+        'emg', '肌电',                               # 肌电信号
+        'force', '力', 'torque', '扭矩',             # 力/扭矩
+        'value', 'data', '数据'                      # 通用名
+    ]
+
+    target_col = None
+    columns_lower = [c.lower() for c in df.columns]
+
+    for valid_name in VALID_COLUMNS:
+        for i, col in enumerate(columns_lower):
+            if valid_name in col:
+                target_col = df.columns[i]
+                break
+        if target_col:
+            break
+
+    # 如果都没找到，取第一个数值列
+    if target_col is None:
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        if len(numeric_cols) > 0:
+            target_col = numeric_cols[0]
+        else:
+            raise ValueError(f"未找到有效数据列，可用列: {df.columns.tolist()}")
+    
+    return target_col
+
+def _add_enhanced_features(seq):
+    """增强版特征提取，返回8个特征维度"""
+    # 基础微分特征
+    diff1 = np.diff(seq, prepend=seq[0])  # 一阶差分（速度）
+    diff2 = np.diff(diff1, prepend=diff1[0])  # 二阶差分（加速度）
+    
+    # 平滑处理
+    win_mean = np.convolve(seq, np.ones(5)/5, mode='same')  # 滑动平均平滑
+    
+    # 运动频率特征
+    zero_crossings = np.where(np.diff(np.signbit(seq - np.mean(seq))))[0]
+    zero_cross_rate = len(zero_crossings) / len(seq)
+    zcr_seq = np.full_like(seq, zero_cross_rate)
+    
+    # 能量特征
+    energy = np.abs(seq) ** 2
+    energy_envelope = np.convolve(energy, np.ones(10)/10, mode='same')
+    
+    # 极值特征
+    peak_val = np.max(seq)
+    peak_pos = np.argmax(seq) / len(seq)  # 归一化峰值位置
+    valley_val = np.min(seq)
+    
+    # 范围特征（区分30/60/90度）
+    range_val = peak_val - valley_val
+    range_seq = np.full_like(seq, range_val)
+    
+    # 组合所有特征，确保返回8个特征维度
+    features = np.stack([
+        seq,                # 0: 原始信号
+        diff1,             # 1: 速度（一阶差分）
+        diff2,             # 2: 加速度（二阶差分）
+        win_mean,          # 3: 平滑信号
+        energy_envelope,   # 4: 能量包络
+        zcr_seq,           # 5: 过零率
+        range_seq,         # 6: 幅度范围
+        np.full_like(seq, peak_pos),  # 7: 峰值位置（归一化）
+    ], axis=1)
+    
+    return features
+
+
 class WaveformDataset(Dataset):
-    def __init__(self, data_dir, seq_len=50, scaler=None):
+    def __init__(self, data_dir, scaler=None):
         self.data_dir = Path(data_dir)
-        self.seq_len = seq_len
+        self.scaler = scaler
         self.samples = []
         self.labels = []
         self.label_names = []
         
-        # 收集所有文件
-        self._collect_files()
-        
-        # 标准化
-        if scaler is not None:
-            self.scaler = scaler
+        # 获取所有子目录作为类别
+        class_dirs = [d for d in self.data_dir.iterdir() if d.is_dir()]
+        if not class_dirs:  # 如果没有子目录，则遍历所有文件
+            files = list(self.data_dir.glob('*'))
+            labels = list(set([f.stem.split('.')[0] for f in files]))  # 使用文件名作为标签
+            self.label_names = sorted(labels)
         else:
-            self.scaler = StandardScaler()
-            
-        if self.samples:
-            # 将所有样本合并进行标准化
-            all_samples = np.array(self.samples)
-            all_samples_flat = all_samples.reshape(-1, all_samples.shape[-1])
-            if scaler is None:  # 只有在没有提供现有标准化器时才进行拟合
-                self.scaler.fit(all_samples_flat)
-            
-            # 对每个样本进行标准化
-            normalized_samples = []
+            self.label_names = sorted([d.name for d in class_dirs])
+        
+        # 创建标签到索引的映射
+        self.label_to_idx = {label: idx for idx, label in enumerate(self.label_names)}
+        
+        # 加载数据
+        self._load_data()
+        
+        # 如果没有传入scaler，则创建一个新的
+        if self.scaler is None:
+            # 收集所有样本以拟合标准化器
+            all_samples_for_fitting = []
             for sample in self.samples:
-                sample_normalized = self.scaler.transform(sample)
-                normalized_samples.append(sample_normalized)
-            self.samples = normalized_samples
-    
-    def _collect_files(self):
-        """收集所有文件"""
-        # 获取所有支持的文件
-        supported_extensions = {'.csv', '.xlsx', '.xls', '.txt'}
-        files = []
+                # 确保样本形状是 (sequence_length, n_features)，然后重塑为 (n_samples, n_features)
+                sample_reshaped = sample.reshape(-1, sample.shape[-1])  # (seq_len * n_channels, n_features)
+                all_samples_for_fitting.append(sample_reshaped)
+            
+            # 合并所有样本
+            all_data_for_fitting = np.vstack(all_samples_for_fitting)
+            
+            # 创建并拟合标准化器
+            self.scaler = StandardScaler()
+            self.scaler.fit(all_data_for_fitting)  # 现在标准化器知道正确的特征数量
         
-        for file_path in self.data_dir.iterdir():
-            if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
-                files.append(file_path)
+        # 标准化所有样本
+        for i in range(len(self.samples)):
+            orig_shape = self.samples[i].shape
+            reshaped_sample = self.samples[i].reshape(-1, orig_shape[-1])
+            self.samples[i] = self.scaler.transform(reshaped_sample).reshape(orig_shape)
+
+    def _load_data(self):
+        """加载数据"""
+        # 遍历数据目录中的所有文件
+        for file_path in self.data_dir.glob('*.csv'):
+            self._load_file(file_path, file_path.parent.name)
         
-        # 提取标签（文件名不带扩展名）
-        labels = []
-        for file_path in files:
-            label = file_path.stem  # 文件名不带扩展名
-            if label not in self.label_names:
-                self.label_names.append(label)
-            labels.append(label)
+        for file_path in self.data_dir.glob('*.xlsx'):
+            self._load_file(file_path, file_path.parent.name)
+            
+        for file_path in self.data_dir.glob('*.xls'):
+            self._load_file(file_path, file_path.parent.name)
+            
+        for file_path in self.data_dir.glob('*.txt'):
+            self._load_file(file_path, file_path.parent.name)
         
-        # 加载所有文件
-        for file_path, label_name in zip(files, labels):
-            label = self.label_names.index(label_name)
-            self._load_file(file_path, label)
-    
+        # 如果没有子目录结构，直接使用文件名作为标签
+        if not self.samples:
+            for file_path in self.data_dir.glob('*'):
+                if file_path.suffix in ['.csv', '.xlsx', '.xls', '.txt']:
+                    label = file_path.stem  # 使用文件名作为标签
+                    self._load_file(file_path, label)
+
     def _load_file(self, file_path, label):
         """加载单个文件"""
         try:
@@ -165,61 +271,26 @@ class WaveformDataset(Dataset):
             elif file_extension == '.xls':
                 df = pd.read_excel(file_path, engine='xlrd')
             elif file_extension == '.txt':
-                df = pd.read_csv(file_path, sep='\s+')  # 空格分隔
+                df = pd.read_csv(file_path, sep='\\s+')  # 空格分隔
             else:
                 raise ValueError(f"不支持的文件格式: {file_extension}")
             
-            # 获取列名（不区分大小写）
-            columns = [col.lower() for col in df.columns]
+            # 智能识别数据列
+            target_col = find_data_column(df)
+            current = df[target_col].values.astype(float)
             
-            # 查找电流或电阻列（支持多种命名方式）
-            current_col = None
-            for col in columns:
-                if 'current' in col or '电流' in col or 'r' in col or '电阻' in col or 'resistance' in col:
-                    current_col = df.columns[columns.index(col)]
-                    break
+            # 信号预处理
+            processed_data = preprocess_signal(current)
             
-            if current_col is None:
-                raise ValueError(f"未找到电流或电阻列，可用列: {df.columns.tolist()}")
+            # 长度归一化
+            normalized_data = signal.resample(processed_data, TARGET_LENGTH)
             
-            current = df[current_col].values
+            # 特征工程
+            features = _add_enhanced_features(normalized_data)
             
-            # 时间归一化处理
-            if len(df.columns) > 1:
-                time_col = df.columns[0]  # 假设第一列是时间
-                time_values = df[time_col].values
-                # 归一化时间到0-1区间
-                if len(time_values) > 1:
-                    time_values = (time_values - time_values.min()) / (time_values.max() - time_values.min())
-            
-            # 统一序列长度
-            if len(current) >= self.seq_len:
-                current = current[:self.seq_len]
-            else:
-                current = np.pad(current, (0, self.seq_len - len(current)), mode="constant")
-                
-            # 添加增强特征
-            def _add_enhanced_features(seq):
-                current = seq
-                diff1 = np.diff(current, prepend=current[0])
-                diff2 = np.diff(diff1, prepend=diff1[0])
-                win_mean = np.convolve(current, np.ones(3)/3, mode='same')
-                peak_val = np.max(current)
-                valley_val = np.min(current)
-                peak_pos = np.argmax(current) / len(current)
-                
-                peak_val_seq = np.full_like(current, peak_val)
-                peak_pos_seq = np.full_like(current, peak_pos)
-                valley_val_seq = np.full_like(current, valley_val)
-                
-                return np.stack([
-                    current, diff1, diff2, win_mean,
-                    peak_val_seq, peak_pos_seq, valley_val_seq
-                ], axis=1)
-            
-            enhanced_features = _add_enhanced_features(current)
-            self.samples.append(enhanced_features)
-            self.labels.append(label)
+            # 添加到样本列表
+            self.samples.append(features)
+            self.labels.append(self.label_to_idx[label])
         except Exception as e:
             print(f"读取 {file_path} 失败：{e}")
 
@@ -230,6 +301,7 @@ class WaveformDataset(Dataset):
         x = torch.FloatTensor(self.samples[idx])  # shape: (seq_len, features)
         y = torch.LongTensor([self.labels[idx]])   # 保持为二维张量 [1]
         return x, y.squeeze()                      # squeeze后变为标量
+
 
 # 训练函数
 def train_model(data_dir, model_save_path="waveform_model.pth", 
@@ -323,179 +395,175 @@ def train_model(data_dir, model_save_path="waveform_model.pth",
             "cnn_channels": 128,
             "dropout": 0.2
         },
-        "input_shape": (50, 7)  # 记录输入形状信息
+        "input_shape": (TARGET_LENGTH, 8)  # 记录输入形状信息，8个特征维度
     }, model_save_path)
     
     print(f"模型已保存到: {model_save_path}")
     print(f"标准化器已保存到: {scaler_save_path}")
     print(f"类别名称已保存到: label_names.json")
 
-# 预测函数
+
 def predict_waveform(file_path, model_path="waveform_model.pth", 
                      scaler_path="waveform_scaler.pkl",
-                     loaded_model=None, loaded_scaler=None, label_names=None):
-    """对单个波形文件进行分类预测
-    
-    Args:
-        file_path: 待预测文件路径
-        model_path: 模型文件路径
-        scaler_path: 标准化器文件路径
-        loaded_model: 已加载的模型对象，如果为None则从文件加载
-        loaded_scaler: 已加载的标准化器对象，如果为None则从文件加载
-        label_names: 类别名称列表，如果为None则从文件加载
-    
-    Returns:
-        预测结果字典
+                     loaded_model=None, loaded_scaler=None, label_names=None, return_score=True):
     """
-    # 加载模型
-    if loaded_model is not None and label_names is not None:
-        model = loaded_model
-        model.eval()
-    else:
+    膝关节康复波形预测与评分
+    """
+    # 加载模型和标准化器（如果未提供）
+    if loaded_model is None or loaded_scaler is None or label_names is None:
         checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-        if label_names is None:
-            with open("label_names.json", "r") as f:
-                label_names = json.load(f)
+        model_config = checkpoint["config"]
         
+        # 重新创建模型
         model = MGTransformer(
-            d_model=checkpoint["config"]["d_model"],
-            nhead=checkpoint["config"]["nhead"],
-            dim_feedforward=checkpoint["config"]["dim_feedforward"],
-            num_layers=checkpoint["config"]["num_layers"],
-            num_classes=len(label_names),
-            cnn_channels=checkpoint["config"]["cnn_channels"],
-            dropout=checkpoint["config"]["dropout"]
+            d_model=model_config["d_model"],
+            nhead=model_config["nhead"],
+            dim_feedforward=model_config["dim_feedforward"],
+            num_layers=model_config["num_layers"],
+            num_classes=len(checkpoint["label_names"]),
+            cnn_channels=model_config["cnn_channels"],
+            dropout=model_config["dropout"]
         )
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
-    
-    # 加载标准化器
-    if loaded_scaler is not None:
-        scaler = loaded_scaler
-    else:
+        
+        # 加载标准化器
         with open(scaler_path, "rb") as f:
             scaler = pickle.load(f)
-    
-    # 加载并预处理数据
+        
+        label_names = checkpoint["label_names"]
+    else:
+        model = loaded_model
+        scaler = loaded_scaler
+        model.eval()
+
+    # 1. 读取数据
     file_extension = Path(file_path).suffix.lower()
-    
     if file_extension == '.csv':
         df = pd.read_csv(file_path)
-    elif file_extension == '.xlsx':
-        df = pd.read_excel(file_path, engine='openpyxl')
-    elif file_extension == '.xls':
-        df = pd.read_excel(file_path, engine='xlrd')
+    elif file_extension in ['.xlsx', '.xls']:
+        df = pd.read_excel(file_path)
     elif file_extension == '.txt':
-        df = pd.read_csv(file_path, sep='\s+')  # 空格分隔
+        df = pd.read_csv(file_path, sep=r'\\s+')
     else:
         raise ValueError(f"不支持的文件格式: {file_extension}")
     
-    # 获取列名（不区分大小写）
-    columns = [col.lower() for col in df.columns]
+    # 2. 智能列名识别
+    target_col = find_data_column(df)  # 使用上面定义的函数
+    raw_data = df[target_col].values.astype(float)
     
-    # 查找电流或电阻列（支持多种命名方式）
-    current_col = None
-    for col in columns:
-        if 'current' in col or '电流' in col or 'r' in col or '电阻' in col or 'resistance' in col:
-            current_col = df.columns[columns.index(col)]
-            break
+    # 3. 信号预处理
+    processed_data = preprocess_signal(raw_data)
     
-    if current_col is None:
-        raise ValueError(f"未找到电流或电阻列，可用列: {df.columns.tolist()}")
+    # 4. 长度归一化（重采样，不是截断！）
+    normalized_data = signal.resample(processed_data, TARGET_LENGTH)
     
-    current = df[current_col].values
+    # 5. 特征工程
+    features = _add_enhanced_features(normalized_data)
     
-    # 统一长度为50
-    if len(current) >= 50:
-        current = current[:50]
-    else:
-        current = np.pad(current, (0, 50 - len(current)), mode="constant")
+    # 6. 标准化 - 需要适配8维特征
+    features_flat = features.reshape(-1, features.shape[-1])  # reshape为(序列长度*T, 8)
+    features_scaled = scaler.transform(features_flat).reshape(features.shape)
     
-    # 添加增强特征
-    def _add_enhanced_features(seq):
-        current = seq
-        diff1 = np.diff(current, prepend=current[0])
-        diff2 = np.diff(diff1, prepend=diff1[0])
-        win_mean = np.convolve(current, np.ones(3)/3, mode='same')
-        peak_val = np.max(current)
-        valley_val = np.min(current)
-        peak_pos = np.argmax(current) / len(current)
-        
-        peak_val_seq = np.full_like(current, peak_val)
-        peak_pos_seq = np.full_like(current, peak_pos)
-        valley_val_seq = np.full_like(current, valley_val)
-        
-        return np.stack([
-            current, diff1, diff2, win_mean,
-            peak_val_seq, peak_pos_seq, valley_val_seq
-        ], axis=1)
-    
-    current = _add_enhanced_features(current)
-    current = scaler.transform(current.reshape(-1, current.shape[-1])).reshape(current.shape)
-    x = torch.FloatTensor(current)  # shape: (seq_len, features)
-    
-    # 预测
+    # 7. 模型预测
+    x = torch.FloatTensor(features_scaled).unsqueeze(0)
     with torch.no_grad():
-        # 确保输入维度正确
-        if x.dim() == 2:
-            x = x.unsqueeze(0)  # (seq_len, features) -> (1, seq_len, features)
-        elif x.dim() == 1:
-            x = x.unsqueeze(0).unsqueeze(2)  # 处理一维情况
-        
-        outputs = model(x)  # x已经是正确的三维形状
+        outputs = model(x)
         probs = torch.softmax(outputs, dim=1).numpy()[0]
         pred_idx = np.argmax(probs)
-        
-    # 返回结果
-    results = {}
-    for i, (label, prob) in enumerate(zip(label_names, probs)):
-        results[label] = float(prob)
     
     predicted_label = label_names[pred_idx]
     confidence = float(probs[pred_idx])
     
+    # 8. 康复评分
+    rehab_score, score_comment = -1, ""
+    if return_score and STANDARD_WAVEFORMS:
+        rehab_score, score_comment = calculate_rehab_score(
+            normalized_data, predicted_label
+        )
+    
     return {
         "predicted_class": predicted_label,
-        "confidence": confidence,
-        "all_probabilities": results
+        "confidence": round(confidence, 4),
+        "rehab_score": rehab_score,
+        "score_comment": score_comment,
+        "all_probabilities": {l: round(float(p), 4) for l, p in zip(label_names, probs)}
     }
 
-# 主程序入口
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="波形分类系统")
-    parser.add_argument("--mode", type=str, choices=["train", "predict"], required=True,
-                        help="运行模式: train(训练) 或 predict(预测)")
-    parser.add_argument("--data_dir", type=str, default="./waveform_data",
-                        help="训练数据目录路径")
-    parser.add_argument("--model_path", type=str, default="waveform_model.pth",
-                        help="模型保存/加载路径")
-    parser.add_argument("--scaler_path", type=str, default="waveform_scaler.pkl",
-                        help="标准化器保存/加载路径")
-    parser.add_argument("--file_path", type=str, default="",
-                        help="待预测的CSV文件路径（预测模式下必需）")
-    parser.add_argument("--epochs", type=int, default=50,
-                        help="训练轮数")
-    
-    args = parser.parse_args()
-    
-    if args.mode == "train":
-        train_model(
-            data_dir=args.data_dir,
-            model_save_path=args.model_path,
-            scaler_save_path=args.scaler_path,
-            epochs=args.epochs
+
+class MGTransformer(nn.Module):
+    def __init__(self, d_model, nhead, dim_feedforward, num_layers, num_classes, 
+                 cnn_channels=128, dropout=0.1):
+        super().__init__()
+        # CNN特征提取器
+        self.cnn = nn.Sequential(
+            nn.Conv1d(in_channels=8, out_channels=cnn_channels//2, kernel_size=5, padding=2),  # 修改为8个输入通道
+            nn.ReLU(),
+            nn.BatchNorm1d(cnn_channels//2),
+            nn.Conv1d(cnn_channels//2, cnn_channels, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm1d(cnn_channels),
+            nn.Conv1d(cnn_channels, d_model, kernel_size=3, padding=1),
         )
-    elif args.mode == "predict":
-        if not args.file_path:
-            raise ValueError("预测模式下必须提供 --file_path 参数")
-        result = predict_waveform(
-            file_path=args.file_path,
-            model_path=args.model_path,
-            scaler_path=args.scaler_path
+        
+        # 位置编码
+        self.pos_encoder = PositionalEncoding(d_model, dropout=dropout)
+        self.layer_norm = nn.LayerNorm(d_model)
+        
+        # Transformer编码器
+        encoder_layers = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward,
+            dropout=dropout, batch_first=True, norm_first=True
         )
-        print("预测结果:")
-        print(f"预测类别: {result['predicted_class']}")
-        print(f"置信度: {result['confidence']:.4f}")
-        print("\n各类别概率:")
-        for label, prob in result['all_probabilities'].items():
-            print(f"  {label}: {prob:.4f}")
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers=num_layers)
+        
+        # 多尺度池化
+        self.pool = lambda x: torch.cat([
+            x.mean(dim=1),    # 平均池化
+            x.max(dim=1)[0],  # 最大池化
+            x.min(dim=1)[0]   # 最小池化
+        ], dim=1)
+        
+        # 分类器
+        self.classifier = nn.Sequential(
+            nn.Linear(3*d_model, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, num_classes)
+        )
+        
+        self._init_weights()
+        
+    def _init_weights(self):
+        initrange = 0.1
+        self.classifier[0].weight.data.uniform_(-initrange, initrange)
+        self.classifier[0].bias.data.zero_()
+        self.classifier[3].weight.data.uniform_(-initrange, initrange)
+        self.classifier[3].bias.data.zero_()
+        self.classifier[5].weight.data.uniform_(-initrange, initrange)
+        self.classifier[5].bias.data.zero_()
+        
+    def forward(self, src):
+        """
+        src: (batch_size, seq_len, feature_dim)
+        """
+        # CNN特征提取
+        src = src.permute(0, 2, 1)  # (batch_size, feature_dim, seq_len)
+        src = self.cnn(src)
+        src = src.permute(0, 2, 1)  # (batch_size, seq_len, d_model)
+        
+        # 位置编码
+        src = self.pos_encoder(src)
+        src = self.layer_norm(src)
+        
+        # Transformer编码器
+        output = self.transformer_encoder(src)
+        
+        # 多尺度池化
+        output = self.pool(output)
+        
+        # 分类器
+        output = self.classifier(output)
+        return output
