@@ -14,7 +14,7 @@ class SignalSplitter:
     def __init__(self):
         pass
     
-gi    def _read_csv_with_encoding(self, file_path: str):
+    def _read_csv_with_encoding(self, file_path: str):
         """
         尝试多种编码格式读取CSV文件
         """

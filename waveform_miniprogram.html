@@ -6,6 +6,7 @@
     <title>🏥 膝关节康复波形分类系统</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <style>
         /* 全局样式重置 */
         * {
@@ -188,63 +189,6 @@
             color: #2c3e50;
         }
 
-        .search-bar {
-            display: flex;
-            gap: 12px;
-        }
-
-        .search-bar input {
-            padding: 0.8rem 1.2rem;
-            border: 1px solid #ddd;
-            border-radius: 30px;
-            width: 280px;
-            font-size: 1rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-bar button {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-btn {
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            color: white;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-
-        .filter-btn {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .filter-btn:hover {
-            background: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        .add-btn {
-            background: linear-gradient(90deg, #2ecc71, #27ae60);
-            color: white;
-        }
-
-        .add-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
-        }
-
         /* 统计卡片 */
         .stats-cards {
             display: grid;
@@ -347,10 +291,6 @@
             margin-bottom: 0.8rem;
             line-height: 1.6;
             font-size: 1.05rem;
-        }
-
-        .ai-content strong {
-            color: #2c3e50;
         }
 
         .ai-details-btn {
@@ -556,13 +496,6 @@
             border: none;
             color: white;
             font-size: 1.8rem;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .ai-dialog-content {
@@ -573,13 +506,7 @@
             flex-direction: column;
             gap: 1.2rem;
         }
-
-        .ai-message, .doctor-message {
-            display: flex;
-            gap: 12px;
-            max-width: 85%;
-        }
-
+            
         .ai-message {
             align-self: flex-start;
         }
@@ -758,93 +685,6 @@
             background: linear-gradient(90deg, #3498db, #2980b9);
         }
 
-        /* 响应式设计 */
-        @media (max-width: 1200px) {
-            .training-charts {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .side-nav {
-                width: 80px;
-            }
-            
-            .side-nav span {
-                display: none;
-            }
-            
-            .side-nav i {
-                margin-right: 0;
-                font-size: 1.3rem;
-            }
-            
-            .side-nav li {
-                justify-content: center;
-                padding: 1.2rem;
-            }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .top-nav {
-                padding: 0 1rem;
-                height: 60px;
-            }
-            
-            .logo h1 {
-                font-size: 1.3rem;
-            }
-            
-            .content {
-                padding: 1rem;
-            }
-            
-            .content-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .search-bar {
-                width: 100%;
-            }
-            
-            .search-bar input {
-                width: 100%;
-            }
-            
-            .stats-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .ai-dialog {
-                width: calc(100% - 40px);
-                height: calc(100% - 40px);
-            }
-        }
-
-        /* 加载动画 */
-        .spinner {
-            border: 4px solid rgba(52, 152, 219, 0.3);
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         /* 文件上传区域 */
         .file-upload-area {
             border: 2px dashed #3498db;
@@ -874,18 +714,6 @@
         .file-upload-area .btn {
             margin-top: 1rem;
             padding: 0.8rem 1.5rem;
-        }
-        
-        /* 上传按钮组 */
-        .upload-btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .upload-btn-group .btn {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
         }
         
         /* 表格样式 */
@@ -922,11 +750,62 @@
             border: 1px solid #ddd;
             border-radius: 8px;
         }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .training-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .side-nav {
+                width: 80px;
+            }
+            .side-nav span {
+                display: none;
+            }
+            .side-nav i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+            .side-nav li {
+                justify-content: center;
+                padding: 1.2rem;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 0 1rem;
+                height: 60px;
+            }
+            .logo h1 {
+                font-size: 1.3rem;
+            }
+            .content {
+                padding: 1rem;
+            }
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            .ai-dialog {
+                width: calc(100% - 40px);
+                height: calc(100% - 40px);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- 顶部导航栏 -->
         <header class="top-nav">
             <div class="logo">
                 <h1>🏥 膝关节康复波形分类系统</h1>
@@ -938,7 +817,6 @@
         </header>
 
         <div class="main-container">
-            <!-- 侧边栏导航 -->
             <nav class="side-nav">
                 <ul>
                     <li class="active" onclick="switchTab('train')"><i class="fas fa-brain"></i> <span>🧠 模型训练</span></li>
@@ -949,7 +827,6 @@
                     <li onclick="switchTab('analysis')"><i class="fas fa-robot"></i> <span>🤖 AI分析</span></li>
                 </ul>
 
-                <!-- DeepSeek AI 助手 -->
                 <div class="ai-assistant">
                     <div class="ai-header">
                         <i class="fas fa-robot"></i>
@@ -962,15 +839,12 @@
                 </div>
             </nav>
 
-            <!-- 主内容区 -->
             <main class="content">
-                <!-- 训练模块 -->
                 <div id="train-tab" class="tab-content">
                     <div class="content-header">
                         <h2>🧠 模型训练</h2>
                     </div>
 
-                    <!-- 数据概览 -->
                     <div class="stats-cards">
                         <div class="stat-card">
                             <h3><i class="fas fa-database"></i> 数据集</h3>
@@ -994,7 +868,6 @@
                         </div>
                     </div>
 
-                    <!-- AI 分析见解卡片 -->
                     <div class="ai-insights">
                         <div class="ai-insights-header">
                             <i class="fas fa-lightbulb"></i>
@@ -1008,7 +881,6 @@
                         <button class="ai-details-btn">查看详细分析</button>
                     </div>
 
-                    <!-- 训练配置表单 -->
                     <div class="form-section">
                         <h3><i class="fas fa-cog"></i> 训练配置</h3>
                         <div class="form-grid">
@@ -1050,7 +922,6 @@
                         </button>
                     </div>
 
-                    <!-- 训练进度和图表 -->
                     <div class="results-section">
                         <h3><i class="fas fa-chart-line"></i> 训练进度</h3>
                         <div class="training-progress">
@@ -1076,7 +947,6 @@
                         </div>
                     </div>
 
-                    <!-- 训练日志 -->
                     <div class="form-section">
                         <h3><i class="fas fa-clipboard-list"></i> 训练日志</h3>
                         <div id="trainingLog" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
@@ -1085,13 +955,11 @@
                     </div>
                 </div>
 
-                <!-- 预测模块 -->
                 <div id="predict-tab" class="tab-content" style="display: none;">
                     <div class="content-header">
                         <h2>🔍 波形预测</h2>
                     </div>
 
-                    <!-- 预测配置表单 -->
                     <div class="form-section">
                         <h3><i class="fas fa-sliders-h"></i> 预测配置</h3>
                         <div class="form-grid">
@@ -1135,7 +1003,6 @@
                         </button>
                     </div>
 
-                    <!-- 预测结果 -->
                     <div class="results-section">
                         <h3><i class="fas fa-poll"></i> 预测结果</h3>
                         <div class="result-card">
@@ -1145,7 +1012,6 @@
                             <div class="result-value confidence-result" id="confidenceResult">--</div>
                         </div>
 
-                        <!-- 概率分布图表 -->
                         <h3><i class="fas fa-chart-pie"></i> 角度成分分布</h3>
                         <div class="chart-container">
                             <canvas id="probabilityChart"></canvas>
@@ -1153,13 +1019,11 @@
                     </div>
                 </div>
 
-                <!-- 可视化模块 -->
                 <div id="visualize-tab" class="tab-content" style="display: none;">
                     <div class="content-header">
                         <h2>📊 数据可视化</h2>
                     </div>
 
-                    <!-- 可视化控制 -->
                     <div class="form-section">
                         <h3><i class="fas fa-sliders-h"></i> 可视化控制</h3>
                         <div class="form-grid">
@@ -1186,7 +1050,6 @@
                         </button>
                     </div>
 
-                    <!-- 图表区域 -->
                     <div class="results-section">
                         <h3><i class="fas fa-wave-square"></i> 波形图表</h3>
                         <div class="chart-container">
@@ -1195,13 +1058,11 @@
                     </div>
                 </div>
 
-                <!-- 数据分割模块 -->
                 <div id="split-tab" class="tab-content" style="display: none;">
                     <div class="content-header">
                         <h2>✂️ 数据分割</h2>
                     </div>
 
-                    <!-- 数据分割配置表单 -->
                     <div class="form-section">
                         <h3><i class="fas fa-cog"></i> 数据分割配置</h3>
                         <div class="form-grid">
@@ -1230,7 +1091,28 @@
                         </div>
                     </div>
 
-                    <!-- 分割参数表格 -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-wave-square"></i> 波形可视化</h3>
+                        <div class="chart-container">
+                            <canvas id="splitVisualizationChart"></canvas>
+                        </div>
+                        <div class="chart-controls" style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                            <select id="xAxisColumn" class="form-control" onchange="updateSplitVisualization()">
+                                <option value="0">第1列</option>
+                                <option value="1" selected>第2列 (Time)</option>
+                                <option value="2">第3列</option>
+                            </select>
+                            <select id="yAxisColumn" class="form-control" onchange="updateSplitVisualization()">
+                                <option value="0">第1列</option>
+                                <option value="1">第2列</option>
+                                <option value="2" selected>第3列 (Value)</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="loadSplitVisualizationData()">
+                                <i class="fas fa-chart-line"></i> 更新图表
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-section" id="splitParamsSection" style="display: none;">
                         <h3><i class="fas fa-table"></i> 分割参数设置</h3>
                         <div class="table-container">
@@ -1244,8 +1126,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="splitParamsTableBody">
-                                    <!-- 动态生成行 -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                         <button class="btn btn-secondary" onclick="previewSplit()" style="margin-top: 15px;">
@@ -1257,13 +1138,11 @@
                     </div>
                 </div>
 
-                <!-- QTBFS康复评分模块 -->
                 <div id="qtbfs-tab" class="tab-content" style="display: none;">
                     <div class="content-header">
                         <h2>❤️ QTBFS康复评分系统</h2>
                     </div>
 
-                    <!-- QTBFS评分配置表单 -->
                     <div class="form-section">
                         <h3><i class="fas fa-cog"></i> 评分配置</h3>
                         <div class="form-grid">
@@ -1299,7 +1178,6 @@
                         </button>
                     </div>
 
-                    <!-- 评分结果 -->
                     <div class="results-section">
                         <h3><i class="fas fa-poll"></i> 评分结果</h3>
                         <div id="qtbfsResults">
@@ -1311,13 +1189,11 @@
                     </div>
                 </div>
 
-                <!-- AI分析模块 -->
                 <div id="analysis-tab" class="tab-content" style="display: none;">
                     <div class="content-header">
                         <h2>🤖 AI智能分析</h2>
                     </div>
 
-                    <!-- AI分析报告 -->
                     <div class="results-section">
                         <h3><i class="fas fa-file-medical-alt"></i> AI分析报告</h3>
                         <div id="aiReportContent">
@@ -1332,7 +1208,6 @@
         </div>
     </div>
 
-    <!-- AI 助手对话框 -->
     <div class="ai-dialog" id="aiDialog">
         <div class="ai-dialog-header">
             <h3><i class="fas fa-robot"></i> AI 助手</h3>
@@ -1362,7 +1237,6 @@
         </div>
     </div>
 
-    <!-- 通知消息 -->
     <div class="notification" id="notification"></div>
 
     <script>
@@ -1371,6 +1245,7 @@
         let waveformChart = null;
         let lossChart = null;
         let accuracyChart = null;
+        let splitVisualizationChart = null;
         
         // 训练数据
         let trainingData = {
@@ -1402,29 +1277,21 @@
 
         // 切换标签页
         function switchTab(tabName) {
-            // 更新标签页按钮状态
             document.querySelectorAll('.side-nav li').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // 找到当前被点击的标签并高亮
             if (event && event.target) {
                 const clickedLi = event.target.closest('li');
-                if (clickedLi) {
-                    clickedLi.classList.add('active');
-                }
+                if (clickedLi) clickedLi.classList.add('active');
             }
             
-            // 隐藏所有标签页内容
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.style.display = 'none';
             });
             
-            // 显示对应的标签页内容
             const targetTab = document.getElementById(tabName + '-tab');
-            if (targetTab) {
-                targetTab.style.display = 'block';
-            }
+            if (targetTab) targetTab.style.display = 'block';
         }
         
         // 切换AI助手对话框
@@ -1437,7 +1304,7 @@
             }
         }
         
-        // 文件拖拽处理
+        // 文件拖拽通用处理
         function handleDragOver(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1450,22 +1317,16 @@
             e.target.closest('.file-upload-area').classList.remove('dragover');
         }
         
-        // 数据集文件处理
+        // ------------------ 数据集处理 ------------------
         function handleDatasetDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleDatasetFiles(e.dataTransfer.files);
-            }
+            e.target.closest('.file-upload-area').classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleDatasetFiles(e.dataTransfer.files);
         }
         
         function handleDatasetSelect(e) {
-            if (e.target.files.length) {
-                handleDatasetFiles(e.target.files);
-            }
+            if (e.target.files.length) handleDatasetFiles(e.target.files);
         }
         
         function handleDatasetFiles(files) {
@@ -1474,29 +1335,22 @@
                 showNotification('请上传ZIP格式的数据集文件', 'error');
                 return;
             }
-            
             selectedDatasetFile = file;
             document.getElementById('datasetFileName').textContent = file.name;
             document.getElementById('datasetFileInfo').style.display = 'flex';
             showNotification(`已选择数据集: ${file.name}`, 'info');
         }
         
-        // 模型文件处理
+        // ------------------ 模型文件处理 ------------------
         function handleModelDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleModelFiles(e.dataTransfer.files);
-            }
+            e.target.closest('.file-upload-area').classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleModelFiles(e.dataTransfer.files);
         }
         
         function handleModelSelect(e) {
-            if (e.target.files.length) {
-                handleModelFiles(e.target.files);
-            }
+            if (e.target.files.length) handleModelFiles(e.target.files);
         }
         
         function handleModelFiles(files) {
@@ -1505,47 +1359,34 @@
                 showNotification('请上传PTH格式的模型文件', 'error');
                 return;
             }
-            
             selectedModelFile = file;
             document.getElementById('modelFileName').textContent = file.name;
             document.getElementById('modelFileInfo').style.display = 'flex';
             showNotification(`已选择模型: ${file.name}`, 'info');
         }
         
-        // 预测数据文件处理
+        // ------------------ 预测数据文件处理 ------------------
         function handleFileDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleDataFiles(e.dataTransfer.files, 'dataFile', 'fileName', 'fileInfo');
-            }
+            e.target.closest('.file-upload-area').classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleDataFiles(e.dataTransfer.files, 'dataFile', 'fileName', 'fileInfo');
         }
         
         function handleFileSelect(e) {
-            if (e.target.files.length) {
-                handleDataFiles(e.target.files, 'dataFile', 'fileName', 'fileInfo');
-            }
+            if (e.target.files.length) handleDataFiles(e.target.files, 'dataFile', 'fileName', 'fileInfo');
         }
         
-        // 可视化数据文件处理
+        // ------------------ 可视化文件处理 ------------------
         function handleVisFileDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleDataFiles(e.dataTransfer.files, 'visDataFile', 'visFileName', 'visFileInfo');
-            }
+            e.target.closest('.file-upload-area').classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleDataFiles(e.dataTransfer.files, 'visDataFile', 'visFileName', 'visFileInfo');
         }
         
         function handleVisFileSelect(e) {
-            if (e.target.files.length) {
-                handleDataFiles(e.target.files, 'visDataFile', 'visFileName', 'visFileInfo');
-            }
+            if (e.target.files.length) handleDataFiles(e.target.files, 'visDataFile', 'visFileName', 'visFileInfo');
         }
         
         function handleDataFiles(files, fileId, nameId, infoId) {
@@ -1558,14 +1399,9 @@
                 return;
             }
             
-            // 保存文件引用
-            if (fileId === 'dataFile') {
-                selectedDataFile = file;
-            } else {
-                selectedVisFile = file;
-            }
+            if (fileId === 'dataFile') selectedDataFile = file;
+            else selectedVisFile = file;
             
-            // 更新UI
             document.getElementById(nameId).textContent = file.name;
             document.getElementById(infoId).style.display = 'flex';
             showNotification(`已选择文件: ${file.name}`, 'info');
@@ -1574,11 +1410,11 @@
         // 更新训练日志
         function updateTrainingLog(message) {
             const logElement = document.getElementById('trainingLog');
-            logElement.innerHTML += message + '\n';
+            logElement.innerHTML += message + '<br>';
             logElement.scrollTop = logElement.scrollHeight;
         }
         
-        // 开始训练
+        // ------------------ 训练逻辑 ------------------
         function startTraining() {
             if (!selectedDatasetFile) {
                 showNotification("请先选择数据集文件！", 'error');
@@ -1591,21 +1427,15 @@
             
             updateTrainingLog("开始上传数据集...");
             
-            // 创建FormData对象
             const formData = new FormData();
             formData.append('file', selectedDatasetFile);
             
-            // 上传数据集
-            fetch('/api/upload_dataset', {
-                method: 'POST',
-                body: formData
-            })
+            fetch('/api/upload_dataset', { method: 'POST', body: formData })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     updateTrainingLog(`数据集上传成功: ${data.dataset_path}`);
                     
-                    // 开始训练
                     const trainData = {
                         data_dir: data.dataset_path,
                         model_path: modelPath,
@@ -1617,25 +1447,18 @@
                     
                     fetch('/api/train', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(trainData)
                     })
                     .then(response => response.json())
                     .then(trainResult => {
                         if (trainResult.success) {
                             updateTrainingLog("训练任务已启动...");
-                            // 开始轮询训练状态
                             pollTrainingStatus();
                         } else {
                             updateTrainingLog(`训练启动失败: ${trainResult.error}`);
                             showNotification(`训练启动失败: ${trainResult.error}`, 'error');
                         }
-                    })
-                    .catch(error => {
-                        updateTrainingLog(`训练启动出错: ${error.message}`);
-                        showNotification(`训练启动出错: ${error.message}`, 'error');
                     });
                 } else {
                     updateTrainingLog(`数据集上传失败: ${data.error}`);
@@ -1643,40 +1466,32 @@
                 }
             })
             .catch(error => {
-                updateTrainingLog(`数据集上传出错: ${error.message}`);
-                showNotification(`数据集上传出错: ${error.message}`, 'error');
+                updateTrainingLog(`出错: ${error.message}`);
+                showNotification(`出错: ${error.message}`, 'error');
             });
         }
         
-        // 轮询训练状态
         function pollTrainingStatus() {
             const pollInterval = setInterval(() => {
                 fetch('/api/train_status')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // 更新进度条
                         document.getElementById('trainingProgressBar').style.width = data.progress + '%';
                         document.getElementById('progressText').textContent = data.message;
                         
-                        // 更新日志
                         if (data.logs && data.logs.length > 0) {
+                            const currentLog = document.getElementById('trainingLog').innerText;
                             data.logs.forEach(log => {
-                                if (!document.getElementById('trainingLog').innerText.includes(log)) {
-                                    updateTrainingLog(log);
-                                }
+                                if (!currentLog.includes(log)) updateTrainingLog(log);
                             });
                         }
                         
-                        // 更新图表数据
                         if (data.chart_data) {
-                            trainingData.epochs = data.chart_data.epochs;
-                            trainingData.losses = data.chart_data.losses;
-                            trainingData.accuracies = data.chart_data.accuracies;
+                            trainingData = data.chart_data;
                             updateTrainingCharts();
                         }
                         
-                        // 训练完成
                         if (data.status === 'completed') {
                             clearInterval(pollInterval);
                             showNotification('模型训练完成！', 'success');
@@ -1685,14 +1500,10 @@
                             showNotification('训练出错，请查看日志', 'error');
                         }
                     }
-                })
-                .catch(error => {
-                    console.error('获取训练状态出错:', error);
                 });
             }, 1000);
         }
         
-        // 初始化训练图表
         function initTrainingCharts() {
             const lossCtx = document.getElementById('lossChart').getContext('2d');
             const accCtx = document.getElementById('accuracyChart').getContext('2d');
@@ -1713,24 +1524,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Epoch'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Loss'
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
             
             accuracyChart = new Chart(accCtx, {
@@ -1746,30 +1540,14 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
+                options: { 
+                    responsive: true, 
                     maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Epoch'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Accuracy'
-                            },
-                            min: 0,
-                            max: 1
-                        }
-                    }
+                    scales: { y: { min: 0, max: 1 } }
                 }
             });
         }
         
-        // 更新训练图表
         function updateTrainingCharts() {
             if (lossChart && accuracyChart) {
                 lossChart.data.labels = trainingData.epochs;
@@ -1782,73 +1560,45 @@
             }
         }
         
-        // 开始预测
+        // ------------------ 预测逻辑 ------------------
         function startPrediction() {
-            if (!selectedModelFile) {
-                showNotification("请先选择模型文件！", 'error');
-                return;
-            }
-            
-            if (!selectedDataFile) {
-                showNotification("请先选择数据文件！", 'error');
+            if (!selectedModelFile || !selectedDataFile) {
+                showNotification("请先选择模型和数据文件！", 'error');
                 return;
             }
             
             updateTrainingLog(`开始上传模型文件...`);
-            
-            // 上传模型文件
             const modelFormData = new FormData();
             modelFormData.append('file', selectedModelFile);
             
-            fetch('/api/upload_model', {
-                method: 'POST',
-                body: modelFormData
-            })
+            fetch('/api/upload_model', { method: 'POST', body: modelFormData })
             .then(response => response.json())
             .then(modelData => {
                 if (modelData.success) {
-                    updateTrainingLog(`模型加载成功`);
-                    
-                    // 上传数据文件并进行预测
-                    updateTrainingLog(`开始上传数据文件...`);
-                    
+                    updateTrainingLog(`模型加载成功，开始预测...`);
                     const dataFormData = new FormData();
                     dataFormData.append('file', selectedDataFile);
                     
-                    fetch('/api/predict', {
-                        method: 'POST',
-                        body: dataFormData
-                    })
+                    fetch('/api/predict', { method: 'POST', body: dataFormData })
                     .then(response => response.json())
                     .then(predictionResult => {
                         if (predictionResult.success) {
-                            // 更新UI
                             document.getElementById('predictionResult').textContent = predictionResult.predicted_class;
                             document.getElementById('confidenceResult').textContent = (predictionResult.confidence * 100).toFixed(2) + '%';
                             
-                            // 更新概率分布图表
                             updateProbabilityChart(predictionResult.all_probabilities);
-                            
-                            // 生成AI分析报告
                             generateAIReport(
                                 predictionResult.predicted_class, 
                                 predictionResult.confidence, 
                                 predictionResult.all_probabilities
                             );
                             
-                            updateTrainingLog(`✅ 预测完成!`);
-                            updateTrainingLog(`  预测结果: ${predictionResult.predicted_class}`);
-                            updateTrainingLog(`  匹配度: ${(predictionResult.confidence * 100).toFixed(2)}%`);
-                            
+                            updateTrainingLog(`✅ 预测完成: ${predictionResult.predicted_class}`);
                             showNotification('预测完成！', 'success');
                         } else {
                             updateTrainingLog(`预测失败: ${predictionResult.error}`);
                             showNotification(`预测失败: ${predictionResult.error}`, 'error');
                         }
-                    })
-                    .catch(error => {
-                        updateTrainingLog(`预测出错: ${error.message}`);
-                        showNotification(`预测出错: ${error.message}`, 'error');
                     });
                 } else {
                     updateTrainingLog(`模型加载失败: ${modelData.error}`);
@@ -1856,275 +1606,119 @@
                 }
             })
             .catch(error => {
-                updateTrainingLog(`模型上传出错: ${error.message}`);
-                showNotification(`模型上传出错: ${error.message}`, 'error');
+                updateTrainingLog(`出错: ${error.message}`);
+                showNotification(`出错: ${error.message}`, 'error');
             });
         }
         
-        // 更新概率分布图表
         function updateProbabilityChart(predictions) {
             const ctx = document.getElementById('probabilityChart').getContext('2d');
+            if (probabilityChart) probabilityChart.destroy();
             
-            // 如果图表已存在，先销毁
-            if (probabilityChart) {
-                probabilityChart.destroy();
-            }
-            
-            // 准备数据
             const labels = Object.keys(predictions);
             const data = Object.values(predictions).map(p => (p * 100).toFixed(2));
             
-            // 生成颜色
-            const backgroundColors = [
-                'rgba(52, 152, 219, 0.7)',
-                'rgba(46, 204, 113, 0.7)',
-                'rgba(241, 196, 15, 0.7)',
-                'rgba(155, 89, 182, 0.7)',
-                'rgba(230, 126, 34, 0.7)',
-                'rgba(231, 76, 60, 0.7)'
-            ];
-            
-            // 创建饼图
             probabilityChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: data,
-                        backgroundColor: backgroundColors.slice(0, labels.length),
-                        borderColor: '#fff',
+                        backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#e74c3c'],
                         borderWidth: 2
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: {
-                                    size: 12
-                                },
-                                padding: 20
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.label}: ${context.raw}%`;
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '角度分类概率分布',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
         
-        // 可视化数据
+        // ------------------ 数据可视化 (真实后端调用) ------------------
         function visualizeData() {
             if (!selectedVisFile) {
                 showNotification("请先选择数据文件！", 'error');
                 return;
             }
             
-            // 这里应该实际处理文件并生成可视化
-            // 由于这是前端演示，我们生成模拟数据
+            updateTrainingLog(`开始可视化数据: ${selectedVisFile.name}`);
             
-            updateTrainingLog(`开始可视化数据: ${selectedVisFile.name}\n`);
-            
-            const ctx = document.getElementById('waveformChart').getContext('2d');
-            
-            // 如果图表已存在，先销毁
-            if (waveformChart) {
-                waveformChart.destroy();
-            }
-            
-            // 生成模拟波形数据
-            const dataPoints = 50;
-            const labels = Array.from({length: dataPoints}, (_, i) => i);
-            const data = Array.from({length: dataPoints}, () => Math.random() * 100);
-            
-            // 添加一些周期性特征
-            for (let i = 0; i < dataPoints; i++) {
-                data[i] += 50 * Math.sin(i * 0.5) + 30 * Math.cos(i * 0.3);
-            }
-            
-            // 创建线图
-            waveformChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '电流值 (A)',
-                        data: data,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3,
-                        pointRadius: 0,
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: '时间点',
-                                font: {
-                                    size: 14
-                                }
-                            }
+            const formData = new FormData();
+            formData.append('file', selectedVisFile);
+
+            // 1. 上传文件
+            fetch('/api/upload_for_visualization', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(uploadRes => {
+                if(!uploadRes.success) throw new Error(uploadRes.error);
+                
+                // 2. 获取数据点
+                return fetch('/api/visualize_split_data', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ file_path: uploadRes.path })
+                });
+            })
+            .then(r => r.json())
+            .then(res => {
+                if(res.success) {
+                    const ctx = document.getElementById('waveformChart').getContext('2d');
+                    if(waveformChart) waveformChart.destroy();
+                    
+                    waveformChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: res.labels,
+                            datasets: [{
+                                label: '信号值',
+                                data: res.data,
+                                borderColor: '#3498db',
+                                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                tension: 0.1,
+                                fill: true
+                            }]
                         },
-                        y: {
-                            title: {
-                                display: true,
-                                text: '电流值 (A)',
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '波形数据可视化',
-                            font: {
-                                size: 16
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { title: { display: true, text: '采样点' } },
+                                y: { title: { display: true, text: '数值' } }
                             },
-                            padding: {
-                                top: 10,
-                                bottom: 20
+                            plugins: {
+                                title: { display: true, text: `文件: ${selectedVisFile.name}` },
+                                zoom: {
+                                    zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+                                    pan: { enabled: true, mode: 'x' }
+                                }
                             }
                         }
-                    }
+                    });
+                    showNotification('可视化图表已更新', 'success');
+                    updateTrainingLog('✅ 可视化成功');
+                } else {
+                    throw new Error(res.error);
                 }
+            })
+            .catch(e => {
+                showNotification(`可视化失败: ${e.message}`, 'error');
+                updateTrainingLog(`可视化出错: ${e.message}`);
             });
-            
-            updateTrainingLog('✅ 波形可视化已生成！\n');
-            showNotification('波形可视化已生成！', 'success');
         }
         
-        // 生成AI分析报告（专业医生风格）
-        function generateAIReport(predictedClass, confidence, probabilities) {
-            const sortedProbs = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
-            
-            // 生成专业医生风格的康复建议
-            const recommendations = [
-                "建议继续当前康复训练方案，保持每周3-4次的训练频率。",
-                "根据当前角度表现，可适当增加该角度的训练强度和持续时间。",
-                "注意训练过程中如有不适感应立即停止，并及时就医复查。",
-                "建议配合物理治疗师进行手法治疗，以加速康复进程。",
-                "可增加日常生活中的功能性训练，如上下楼梯、蹲起等动作。",
-                "保持良好的生活习惯，保证充足睡眠，有助于组织修复。"
-            ];
-            
-            // 随机选择2-3条建议
-            const selectedRecommendations = [];
-            const numRecommendations = Math.floor(Math.random() * 2) + 2; // 2-3条
-            for (let i = 0; i < numRecommendations; i++) {
-                const randomIndex = Math.floor(Math.random() * recommendations.length);
-                if (!selectedRecommendations.includes(recommendations[randomIndex])) {
-                    selectedRecommendations.push(recommendations[randomIndex]);
-                }
-            }
-            
-            let reportHTML = `
-                <div style="padding: 1.5rem;">
-                    <h3 style="color: #2c3e50; margin-bottom: 1.5rem; font-size: 1.4rem;">
-                        <i class="fas fa-file-medical-alt"></i> 康复评估报告
-                    </h3>
-                    
-                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
-                            <strong>📅 评估时间:</strong> ${new Date().toLocaleString()}
-                        </p>
-                        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">
-                            <strong>🎯 主要角度:</strong> 您的膝关节当前主要活动角度为 <span style="color: #3498db; font-weight: bold;">${predictedClass}</span>
-                        </p>
-                        <p style="font-size: 1.2rem;">
-                            <strong>📊 主角度匹配度:</strong> <span style="color: #2ecc71; font-weight: bold;">${(confidence * 100).toFixed(2)}%</span>
-                        </p>
-                    </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-list-ol"></i> 各角度成分分析
-                    </h4>
-                    <div style="margin-bottom: 1.5rem;">
-            `;
-            
-            sortedProbs.forEach(([angle, prob], index) => {
-                const marker = index === 0 ? '🏆' : (index < 3 ? '⭐' : '▫️');
-                const level = prob > 0.7 ? '优秀' : prob > 0.5 ? '良好' : prob > 0.3 ? '一般' : '较差';
-                reportHTML += `
-                    <p style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span>${marker} ${angle} (${level})</span>
-                        <span style="font-weight: bold; color: ${index === 0 ? '#3498db' : '#6c757d'}">${(prob * 100).toFixed(2)}%</span>
-                    </p>
-                `;
-            });
-            
-            reportHTML += `
-                    </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-check-circle"></i> 康复建议
-                    </h4>
-                    <div style="margin-bottom: 1.5rem;">
-            `;
-            
-            selectedRecommendations.forEach(recommendation => {
-                reportHTML += `
-                    <p style="margin-bottom: 0.5rem;">${recommendation}</p>
-                `;
-            });
-            
-            reportHTML += `
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('aiReport').innerHTML = reportHTML;
-        }
-        
-        // 数据分割文件处理
+        // ------------------ 数据分割 ------------------
         function handleSplitFileDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleSplitFiles(e.dataTransfer.files);
-            }
+            e.target.closest('.file-upload-area').classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleSplitFiles(e.dataTransfer.files);
         }
         
         function handleSplitFileSelect(e) {
-            if (e.target.files.length) {
-                handleSplitFiles(e.target.files);
-            }
+            if (e.target.files.length) handleSplitFiles(e.target.files);
         }
         
         function handleSplitFiles(files) {
@@ -2133,31 +1727,99 @@
                 showNotification('请上传CSV格式的文件', 'error');
                 return;
             }
-            
             selectedSplitFile = file;
             document.getElementById('splitFileName').textContent = file.name;
             document.getElementById('splitFileInfo').style.display = 'flex';
             showNotification(`已选择文件: ${file.name}`, 'info');
+            loadSplitVisualizationData(); 
         }
-        
-        // 确认分割段数
-        function confirmSegmentCount() {
-            const segmentCount = parseInt(document.getElementById('segmentCount').value);
-            if (isNaN(segmentCount) || segmentCount <= 0) {
-                showNotification('请输入有效的分割段数', 'error');
+
+        // 加载分割可视化数据
+        function loadSplitVisualizationData() {
+            if (!selectedSplitFile) {
+                showNotification('请先选择文件', 'error');
                 return;
             }
-            
-            generateSplitParamsTable(segmentCount);
-            document.getElementById('splitParamsSection').style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', selectedSplitFile);
+
+            fetch('/api/upload_for_visualization', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const visualizationData = {
+                        file_path: data.path,
+                        x_axis_column: parseInt(document.getElementById('xAxisColumn').value) || 1,
+                        y_axis_column: parseInt(document.getElementById('yAxisColumn').value) || 2
+                    };
+
+                    fetch('/api/visualize_split_data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(visualizationData)
+                    })
+                    .then(response => response.json())
+                    .then(vizData => {
+                        if (vizData.success) {
+                            renderVisualizationChart(vizData.labels, vizData.data, vizData.x_axis_label, vizData.y_axis_label);
+                            showNotification('波形数据加载成功', 'success');
+                        } else {
+                            showNotification(`加载可视化数据失败: ${vizData.error}`, 'error');
+                        }
+                    });
+                } else {
+                    showNotification(`上传文件失败: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => showNotification('上传文件时出错', 'error'));
+        }
+
+        // 渲染分割图表
+        function renderVisualizationChart(labels, data, xAxisLabel, yAxisLabel) {
+            const ctx = document.getElementById('splitVisualizationChart').getContext('2d');
+            if (splitVisualizationChart) splitVisualizationChart.destroy();
+
+            splitVisualizationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: yAxisLabel,
+                        data: data,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        zoom: {
+                            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+                            pan: { enabled: true, mode: 'x' }
+                        }
+                    }
+                }
+            });
         }
         
-        // 生成分割参数表格
-        function generateSplitParamsTable(count) {
+        // 更新分割图表（下拉框回调）
+        function updateSplitVisualization() {
+            loadSplitVisualizationData();
+        }
+        
+        // 分割配置
+        function confirmSegmentCount() {
+            const segmentCount = parseInt(document.getElementById('segmentCount').value);
+            if (isNaN(segmentCount) || segmentCount <= 0) return;
+            
             const tbody = document.getElementById('splitParamsTableBody');
             tbody.innerHTML = '';
-            
-            for (let i = 0; i < count; i++) {
+            for (let i = 0; i < segmentCount; i++) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${i + 1}</td>
@@ -2167,14 +1829,11 @@
                 `;
                 tbody.appendChild(row);
             }
+            document.getElementById('splitParamsSection').style.display = 'block';
         }
         
-        // 预览分割效果
         function previewSplit() {
-            if (!selectedSplitFile) {
-                showNotification('请先选择文件', 'error');
-                return;
-            }
+            if (!selectedSplitFile) return showNotification('请先选择文件', 'error');
             
             const segmentCount = parseInt(document.getElementById('segmentCount').value);
             const params = [];
@@ -2183,162 +1842,91 @@
                 const start = parseFloat(document.getElementById(`start_${i}`).value);
                 const end = parseFloat(document.getElementById(`end_${i}`).value);
                 const name = document.getElementById(`name_${i}`).value.trim();
-                
-                if (isNaN(start) || isNaN(end) || !name) {
-                    showNotification(`请检查第${i + 1}行参数`, 'error');
-                    return;
-                }
-                
+                if (isNaN(start) || isNaN(end) || !name) return showNotification(`请检查第${i + 1}行参数`, 'error');
                 params.push({ start, end, name });
             }
             
-            // 发送预览请求
             const formData = new FormData();
             formData.append('file', selectedSplitFile);
             formData.append('params', JSON.stringify(params));
             
-            fetch('/api/preview_split', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
+            fetch('/api/preview_split', { method: 'POST', body: formData })
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    showNotification('预览成功，数据格式正确', 'success');
-                } else {
-                    showNotification(`预览失败: ${data.error}`, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('预览分割时出错:', error);
-                showNotification('预览分割时出错', 'error');
+                if (data.success) showNotification('预览成功，数据格式正确', 'success');
+                else showNotification(`预览失败: ${data.error}`, 'error');
             });
         }
         
-        // 执行分割
         function executeSplit() {
-            if (!selectedSplitFile) {
-                showNotification('请先选择文件', 'error');
-                return;
-            }
+            if (!selectedSplitFile) return showNotification('请先选择文件', 'error');
             
             const segmentCount = parseInt(document.getElementById('segmentCount').value);
             const params = [];
-            
             for (let i = 0; i < segmentCount; i++) {
                 const start = parseFloat(document.getElementById(`start_${i}`).value);
                 const end = parseFloat(document.getElementById(`end_${i}`).value);
                 const name = document.getElementById(`name_${i}`).value.trim();
-                
-                if (isNaN(start) || isNaN(end) || !name) {
-                    showNotification(`请检查第${i + 1}行参数`, 'error');
-                    return;
-                }
-                
                 params.push({ start, end, name });
             }
             
-            // 发送分割请求 - 直接上传文件进行分割
             const formData = new FormData();
-            formData.append('file', selectedSplitFile);  // 直接上传文件
-            formData.append('params', JSON.stringify(params));  // 参数以JSON字符串形式传递
+            formData.append('file', selectedSplitFile);
+            formData.append('params', JSON.stringify(params));
             
-            fetch('/api/split_signal', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
+            fetch('/api/split_signal', { method: 'POST', body: formData })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    showNotification(`分割完成！生成了${data.file_count}个文件，准备下载`, 'success');
-                    
-                    // 触发下载
+                    showNotification(`分割完成！生成了${data.file_count || '多'}个文件，准备下载`, 'success');
                     if (data.download_url) {
                         const link = document.createElement('a');
                         link.href = data.download_url;
                         link.download = '';
                         link.click();
-                        
-                        showNotification('文件已开始下载', 'info');
                     }
                 } else {
                     showNotification(`分割失败: ${data.error}`, 'error');
                 }
-            })
-            .catch(error => {
-                console.error('执行分割时出错:', error);
-                showNotification('执行分割时出错', 'error');
             });
         }
 
-        // 处理状态0文件
+        // ------------------ QTBFS 评分 ------------------
         function handleState0Drop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
+            e.preventDefault(); e.stopPropagation();
+            e.target.closest('.file-upload-area').classList.remove('dragover');
             if (e.dataTransfer.items) {
-                const files = Array.from(e.dataTransfer.items)
-                    .filter(item => item.kind === 'file')
-                    .map(item => item.getAsFile());
-                state0Files = files;
-                showNotification(`已选择${files.length}个状态0参考文件`, 'info');
+                state0Files = Array.from(e.dataTransfer.items).filter(i => i.kind === 'file').map(i => i.getAsFile());
+                showNotification(`已选择${state0Files.length}个状态0参考文件`, 'info');
             }
         }
-        
         function handleState0Select(e) {
             state0Files = Array.from(e.target.files);
             showNotification(`已选择${state0Files.length}个状态0参考文件`, 'info');
         }
-        
-        // 处理当前状态文件
         function handleCurrentDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
+            e.preventDefault(); e.stopPropagation();
+            e.target.closest('.file-upload-area').classList.remove('dragover');
             if (e.dataTransfer.items) {
-                const files = Array.from(e.dataTransfer.items)
-                    .filter(item => item.kind === 'file')
-                    .map(item => item.getAsFile());
-                currentFiles = files;
+                currentFiles = Array.from(e.dataTransfer.items).filter(i => i.kind === 'file').map(i => i.getAsFile());
                 showNotification(`已选择${currentFiles.length}个当前状态文件`, 'info');
             }
         }
-        
         function handleCurrentSelect(e) {
             currentFiles = Array.from(e.target.files);
             showNotification(`已选择${currentFiles.length}个当前状态文件`, 'info');
         }
         
-        // 计算QTBFS评分
         function calculateQTBFSScore() {
-            if (currentFiles.length === 0) {
-                showNotification('请上传当前状态文件', 'error');
-                return;
-            }
+            if (currentFiles.length === 0) return showNotification('请上传当前状态文件', 'error');
             
-            // 这里应该构建请求数据并发送到后端
             const formData = new FormData();
+            // 修正Key名：不带索引下标，直接使用列表
+            currentFiles.forEach(file => formData.append('current_files', file));
+            state0Files.forEach(file => formData.append('state0_files', file));
             
-            // 添加当前状态文件
-            currentFiles.forEach((file, index) => {
-                formData.append(`current_files_${index}`, file);
-            });
-            
-            // 添加状态0文件（如果有）
-            state0Files.forEach((file, index) => {
-                formData.append(`state0_files_${index}`, file);
-            });
-            
-            // 发送评分请求
-            fetch('/api/qtbfs_calculate', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
+            fetch('/api/qtbfs_calculate', { method: 'POST', body: formData })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     displayQTBFSResult(data.result);
@@ -2346,27 +1934,17 @@
                 } else {
                     showNotification(`评分计算失败: ${data.error}`, 'error');
                 }
-            })
-            .catch(error => {
-                console.error('计算QTBFS评分时出错:', error);
-                showNotification('计算QTBFS评分时出错', 'error');
             });
         }
         
-        // 显示QTBFS评分结果
         function displayQTBFSResult(result) {
             const container = document.getElementById('qtbfsResults');
-            
             let resultHTML = `
                 <div style="padding: 1.5rem;">
                     <h3 style="color: #2c3e50; margin-bottom: 1.5rem; font-size: 1.4rem;">
                         <i class="fas fa-heartbeat"></i> QTBFS康复评分结果
                     </h3>
-                    
                     <div style="background: linear-gradient(135deg, #ffebee, #ffcdd2); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
-                            <strong>📅 评估时间:</strong> ${new Date().toLocaleString()}
-                        </p>
                         <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">
                             <strong>❤️ QTBFS总分:</strong> <span style="color: #e74c3c; font-weight: bold; font-size: 1.8rem;">${result.total_score}</span>/100
                         </p>
@@ -2374,282 +1952,105 @@
                             <strong>📋 康复阶段:</strong> <span style="color: #2ecc71; font-weight: bold;">${result.stage}</span>
                         </p>
                     </div>
-                    
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
                         <div class="stat-card" style="border-top-color: #3498db;">
-                            <h3><i class="fas fa-weight"></i> 域I: 力学承载能力</h3>
-                            <div class="stat-value" style="color: #3498db;">${result.domain_I.total}/40</div>
-                            <div class="stat-label">子维度A: ${result.domain_I.subA_score}/20 - 峰值响应能力</div>
-                            <div class="stat-label">子维度B: ${result.domain_I.subB_score}/12 - 角度响应曲线</div>
-                            <div class="stat-label">子维度C: ${result.domain_I.subC_score}/8 - 大角度响应</div>
+                            <h3>域I: 力学承载能力 (${result.domain_I.total}/40)</h3>
+                            <div class="stat-label">A.峰值响应: ${result.domain_I.subA_score}</div>
+                            <div class="stat-label">B.角度曲线: ${result.domain_I.subB_score}</div>
+                            <div class="stat-label">C.大角度: ${result.domain_I.subC_score}</div>
                         </div>
-                        
                         <div class="stat-card" style="border-top-color: #e74c3c;">
-                            <h3><i class="fas fa-tachometer-alt"></i> 域II: 动态适应能力</h3>
-                            <div class="stat-value" style="color: #e74c3c;">${result.domain_II.total}/35</div>
-                            <div class="stat-label">子维度A: ${result.domain_II.subA_score}/15 - 速度梯度响应</div>
-                            <div class="stat-label">子维度B: ${result.domain_II.subB_score}/12 - 重复稳定性</div>
-                            <div class="stat-label">子维度C: ${result.domain_II.subC_score}/8 - 速度-角度交互</div>
+                            <h3>域II: 动态适应能力 (${result.domain_II.total}/35)</h3>
+                            <div class="stat-label">A.速度梯度: ${result.domain_II.subA_score}</div>
+                            <div class="stat-label">B.重复稳定: ${result.domain_II.subB_score}</div>
+                            <div class="stat-label">C.交互: ${result.domain_II.subC_score}</div>
                         </div>
-                        
                         <div class="stat-card" style="border-top-color: #f39c12;">
-                            <h3><i class="fas fa-bolt"></i> 域III: 功能储备能力</h3>
-                            <div class="stat-value" style="color: #f39c12;">${result.domain_III.total}/25</div>
-                            <div class="stat-label">子维度A: ${result.domain_III.subA_score}/10 - 快速响应效率</div>
-                            <div class="stat-label">子维度B: ${result.domain_III.subB_score}/10 - 极限条件响应</div>
-                            <div class="stat-label">子维度C: ${result.domain_III.subC_score}/5 - 信号质量指数</div>
+                            <h3>域III: 功能储备能力 (${result.domain_III.total}/25)</h3>
+                            <div class="stat-label">A.快速响应: ${result.domain_III.subA_score}</div>
+                            <div class="stat-label">B.极限条件: ${result.domain_III.subB_score}</div>
+                            <div class="stat-label">C.信号质量: ${result.domain_III.subC_score}</div>
                         </div>
                     </div>
-                    
-                    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px;">
-                        <h4 style="color: #3498db; margin-bottom: 1rem;">详细分析</h4>
-                        <p><strong>域I详情:</strong> ${result.domain_I.subA_detail.avg_retention ? `平均保留率 ${Math.round(result.domain_I.subA_detail.avg_retention*100)}%` : ''}</p>
-                        <p><strong>域II详情:</strong> ${result.domain_II.subA_detail.avg_consistency ? `平均速度一致性 ${Math.round(result.domain_II.subA_detail.avg_consistency*100)}%` : ''}</p>
-                        <p><strong>域III详情:</strong> ${result.domain_III.subC_detail.snr_db ? `信噪比 ${result.domain_III.subC_detail.snr_db.toFixed(2)} dB` : ''}</p>
-                    </div>
-                </div>
-            `;
-            
+                </div>`;
             container.innerHTML = resultHTML;
         }
-        
-        // 生成AI分析报告（续）
+
+        // ------------------ AI 报告 ------------------
         function generateAIReport(predictedClass, confidence, probabilities) {
             const sortedProbs = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
-            
-            // 生成专业医生风格的康复建议
             const recommendations = [
                 "建议继续当前康复训练方案，保持每周3-4次的训练频率。",
                 "根据当前角度表现，可适当增加该角度的训练强度和持续时间。",
                 "注意训练过程中如有不适感应立即停止，并及时就医复查。",
-                "建议配合物理治疗师进行手法治疗，以加速康复进程。",
-                "可增加日常生活中的功能性训练，如上下楼梯、蹲起等动作。",
-                "保持良好的生活习惯，保证充足睡眠，有助于组织修复。"
+                "建议配合物理治疗师进行手法治疗，以加速康复进程。"
             ];
-            
-            // 随机选择2-3条建议
-            const selectedRecommendations = [];
-            const numRecommendations = Math.floor(Math.random() * 2) + 2; // 2-3条
-            for (let i = 0; i < numRecommendations; i++) {
-                const randomIndex = Math.floor(Math.random() * recommendations.length);
-                if (!selectedRecommendations.includes(recommendations[randomIndex])) {
-                    selectedRecommendations.push(recommendations[randomIndex]);
-                }
-            }
             
             let reportHTML = `
                 <div style="padding: 1.5rem;">
                     <h3 style="color: #2c3e50; margin-bottom: 1.5rem; font-size: 1.4rem;">
                         <i class="fas fa-file-medical-alt"></i> 康复评估报告
                     </h3>
-                    
                     <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
-                            <strong>📅 评估时间:</strong> ${new Date().toLocaleString()}
-                        </p>
                         <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">
-                            <strong>🎯 主要角度:</strong> 您的膝关节当前主要活动角度为 <span style="color: #3498db; font-weight: bold;">${predictedClass}</span>
+                            <strong>🎯 主要角度:</strong> <span style="color: #3498db; font-weight: bold;">${predictedClass}</span>
                         </p>
                         <p style="font-size: 1.2rem;">
                             <strong>📊 主角度匹配度:</strong> <span style="color: #2ecc71; font-weight: bold;">${(confidence * 100).toFixed(2)}%</span>
                         </p>
                     </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-list-ol"></i> 各角度成分分析
-                    </h4>
-                    <div style="margin-bottom: 1.5rem;">
-            `;
+                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">各角度成分分析</h4>
+                    <div style="margin-bottom: 1.5rem;">`;
             
             sortedProbs.forEach(([angle, prob], index) => {
-                const marker = index === 0 ? '🏆' : (index < 3 ? '⭐' : '▫️');
-                const level = prob > 0.7 ? '优秀' : prob > 0.5 ? '良好' : prob > 0.3 ? '一般' : '较差';
-                reportHTML += `
-                    <p style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span>${marker} ${angle} (${level})</span>
-                        <span style="font-weight: bold; color: ${index === 0 ? '#3498db' : '#6c757d'}">${(prob * 100).toFixed(2)}%</span>
-                    </p>
-                `;
+                const marker = index === 0 ? '🏆' : '▫️';
+                reportHTML += `<p style="margin-bottom: 0.5rem;">${marker} ${angle}: ${(prob * 100).toFixed(2)}%</p>`;
             });
             
-            reportHTML += `
-                    </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-check-circle"></i> 康复建议
-                    </h4>
-                    <div style="margin-bottom: 1.5rem;">
-            `;
-            
-            selectedRecommendations.forEach(recommendation => {
-                reportHTML += `
-                    <p style="margin-bottom: 0.5rem;">${recommendation}</p>
-                `;
-            });
-            
-            reportHTML += `
-                    </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-stethoscope"></i> 医生专业建议
-                    </h4>
-                    <div style="background: #fff8e1; padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
-            `;
-            
-            selectedRecommendations.forEach((rec, index) => {
-                reportHTML += `<p style="margin-bottom: 0.8rem;">${index + 1}. ${rec}</p>`;
-            });
-            
-            reportHTML += `
-                    </div>
-                    
-                    <div style="background: #f8f9fa; padding: 1.2rem; border-radius: 10px;">
-                        <p><strong>🔔 温馨提示:</strong></p>
-                        <p>请严格按照康复计划执行训练，切勿急于求成。如有任何疑问或不适，请及时联系您的主治医师。</p>
-                    </div>
-                </div>
-            `;
+            reportHTML += `</div><h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">康复建议</h4><ul>`;
+            recommendations.slice(0, 3).forEach(rec => reportHTML += `<li style="margin-bottom: 0.5rem;">${rec}</li>`);
+            reportHTML += `</ul></div>`;
             
             document.getElementById('aiReportContent').innerHTML = reportHTML;
-            
-            // 切换到AI分析标签页
             switchTab('analysis');
         }
-        
-        // AI助手问答
+
+        // ------------------ AI对话 ------------------
         function askAI() {
             const question = document.getElementById('aiQuestionInput').value;
             if (!question.trim()) return;
             
-            // 添加用户问题
             const contentDiv = document.getElementById('aiDialogContent');
             const userMessage = document.createElement('div');
             userMessage.className = 'doctor-message';
-            userMessage.innerHTML = `
-                <div class="message">${question}</div>
-                <div class="doctor-avatar">研</div>
-            `;
+            userMessage.innerHTML = `<div class="message">${question}</div><div class="doctor-avatar">研</div>`;
             contentDiv.appendChild(userMessage);
             
-            // 模拟AI回复
             setTimeout(() => {
                 const aiMessage = document.createElement('div');
                 aiMessage.className = 'ai-message';
-                aiMessage.innerHTML = `
-                    <div class="ai-avatar">AI</div>
-                    <div class="message">感谢您的提问。关于"${question}"，我建议您参考相关的技术文档或联系技术支持团队获取更详细的帮助。</div>
-                `;
+                aiMessage.innerHTML = `<div class="ai-avatar">AI</div><div class="message">收到您的提问。建议您参考相关技术文档。</div>`;
                 contentDiv.appendChild(aiMessage);
                 contentDiv.scrollTop = contentDiv.scrollHeight;
             }, 1000);
             
-            // 清空输入框
             document.getElementById('aiQuestionInput').value = '';
             contentDiv.scrollTop = contentDiv.scrollHeight;
         }
-        
-        // 页面加载完成后初始化
+
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化概率分布图表（空图表）
-            const probCtx = document.getElementById('probabilityChart').getContext('2d');
-            probabilityChart = new Chart(probCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['暂无数据'],
-                    datasets: [{
-                        data: [100],
-                        backgroundColor: ['#95a5a6'],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: {
-                                    size: 12
-                                },
-                                padding: 20
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '角度分类概率分布',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // 初始化波形图表（空图表）
-            const waveCtx = document.getElementById('waveformChart').getContext('2d');
-            waveformChart = new Chart(waveCtx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: '电流值 (A)',
-                        data: [],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: '时间点'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: '电流值 (A)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: '波形数据可视化',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // 初始化训练图表
             initTrainingCharts();
-            
-            // 为AI助手输入框添加回车事件
             document.getElementById('aiQuestionInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    askAI();
-                }
+                if (e.key === 'Enter') askAI();
             });
+            
+            // 初始化空图表以占位
+            const probCtx = document.getElementById('probabilityChart').getContext('2d');
+            probabilityChart = new Chart(probCtx, { type: 'pie', data: { datasets: [{ data: [] }] } });
+            
+            const waveCtx = document.getElementById('waveformChart').getContext('2d');
+            waveformChart = new Chart(waveCtx, { type: 'line', data: { datasets: [] } });
         });
     </script>
 </body>
-</html>
-
 </html>

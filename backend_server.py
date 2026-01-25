@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import re
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify, send_from_directory, send_file
@@ -65,6 +66,7 @@ for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+app.config['TEMP_FOLDER'] = TEMP_FOLDER
 
 # 全局变量存储模型和相关组件
 model = None
@@ -338,24 +340,33 @@ def api_qtbfs_calculate():
         def save_and_map(files, target_dir, map_dict):
             for file in files:
                 if not file.filename: continue
+                # 确保使用 secure_filename 安全保存
                 safe_name = secure_filename(file.filename)
                 save_path = os.path.join(target_dir, safe_name)
                 file.save(save_path)
                 
-                # 根据文件名解析 key (如 angle_30.csv -> angle_30)
-                # 简单规则：去掉扩展名
-                key = os.path.splitext(safe_name)[0]
-                # 这里可能需要更复杂的正则匹配来剔除多余后缀，如 angle_30_state0 -> angle_30
-                if 'angle_' in key:
-                    # 尝试提取标准 key
-                    import re
-                    match = re.search(r'(angle_\d+)', key)
-                    if match: key = match.group(1)
-                elif 'speed_' in key:
-                    match = re.search(r'(speed_\d+_\ds)', key) # 匹配 speed_30_1s
-                    if match: key = match.group(1)
-                    
-                map_dict[key] = save_path
+                # --- 关键修改：更强的正则匹配，不区分大小写，忽略文件扩展名 ---
+                
+                # 1. 尝试匹配 angle_XX (如 angle_30.xlsx, ANGLE_30.csv)
+                # 使用 re.IGNORECASE 忽略大小写
+                match_angle = re.search(r'(angle_\d+)', safe_name, re.IGNORECASE)
+                if match_angle:
+                    # 统一转为小写 key，例如 'angle_30'
+                    key = match_angle.group(1).lower()
+                    map_dict[key] = save_path
+                    continue
+                
+                # 2. 尝试匹配 speed_XX_Ys (如 speed_30deg_1s.xlsx)
+                match_speed = re.search(r'speed_(\d+)(?:deg)?_(\d+)s', safe_name, re.IGNORECASE)
+                if match_speed:
+                    deg = match_speed.group(1)
+                    sec = match_speed.group(2)
+                    key = f"speed_{deg}_{sec}s"
+                    map_dict[key] = save_path
+                    continue
+                
+                # 3. 默认回退：使用文件名（去掉后缀）
+                map_dict[os.path.splitext(safe_name)[0].lower()] = save_path
 
         save_and_map(state0_files, state0_dir, input_data['state0'])
         save_and_map(current_files, current_dir, input_data['current_state'])
