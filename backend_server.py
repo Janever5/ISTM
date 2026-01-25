@@ -1,8 +1,9 @@
 import json
 import os
+import logging
 import numpy as np
 import pandas as pd
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import torch
 import torch.nn as nn
@@ -13,6 +14,13 @@ import sys
 import zipfile
 import threading
 import time
+import shutil
+import uuid
+from werkzeug.utils import secure_filename
+
+# 初始化日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 统一的波形序列长度（保留更多时间细节）
 TARGET_LENGTH = 100
@@ -23,22 +31,40 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 导入模型定义
 from waveform_classifier import MGTransformer, WaveformDataset, train_model, predict_waveform, load_standard_waveforms
 
+# 添加新的导入
+from qtbfs_scorer import QTBFSScorer
+from signal_splitter import SignalSplitter
+
 # 在文件开头添加标准波形库加载
 def initialize_system():
     """初始化系统，加载标准波形库"""
     try:
         load_standard_waveforms()
-        print("✅ 标准波形库加载成功")
+        logger.info("✅ 标准波形库加载成功")
     except Exception as e:
-        print(f"⚠️  标准波形库加载失败: {e}")
+        logger.warning(f"⚠️  标准波形库加载失败: {e}")
+
+# 初始化系统
+try:
+    initialize_system()
+except Exception as e:
+    logger.error(f"系统初始化失败: {e}")
+    raise
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
 
-# 配置上传文件夹
+# 目录配置
 UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+OUTPUT_FOLDER = 'output'
+TEMP_FOLDER = 'tmp'
+
+for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
 # 全局变量存储模型和相关组件
 model = None
@@ -72,133 +98,56 @@ def index():
 def static_files(path):
     return send_from_directory('.', path)
 
-@app.route('/api/upload_dataset', methods=['POST'])
-def upload_dataset():
-    try:
-        if 'files' not in request.files and 'file' not in request.files:
-            return jsonify({'success': False, 'error': '未找到文件'}), 400
-        
-        # 处理单个文件上传的情况（原有的逻辑）
-        uploaded_files = []
-        if 'file' in request.files:
-            file = request.files['file']
-            if file.filename != '':
-                uploaded_files.append(file)
-        
-        # 处理多个文件上传的情况
-        if 'files' in request.files:
-            files = request.files.getlist('files')
-            uploaded_files.extend(files)
-        
-        if not uploaded_files:
-            return jsonify({'success': False, 'error': '未选择文件'}), 400
-        
-        # 创建一个临时数据集目录
-        dataset_path = os.path.join(app.config['UPLOAD_FOLDER'], 'dataset')
-        os.makedirs(dataset_path, exist_ok=True)
-        
-        for file in uploaded_files:
-            filename = file.filename
-            file_path = os.path.join(dataset_path, filename)
-            file.save(file_path)
-        
-        return jsonify({
-            'success': True, 
-            'message': f'成功上传 {len(uploaded_files)} 个文件',
-            'dataset_path': dataset_path
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 @app.route('/api/upload_model', methods=['POST'])
-def upload_model():
-    global model, scaler, label_names, model_config
-    
+def api_upload_model():
+    """上传模型文件API"""
     try:
         if 'file' not in request.files:
-            return jsonify({'success': False, 'error': '未找到模型文件'}), 400
+            return jsonify({'success': False, 'error': '没有文件被上传'})
         
         file = request.files['file']
         if file.filename == '':
-            return jsonify({'success': False, 'error': '未选择模型文件'}), 400
+            return jsonify({'success': False, 'error': '没有选择文件'})
         
-        # 保存上传的模型文件
-        model_filename = file.filename
-        model_path = os.path.join(app.config['UPLOAD_FOLDER'], model_filename)
+        # 保存模型文件
+        model_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(model_path)
         
-        # 加载模型
-        checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-        label_names = checkpoint["label_names"]
-        model_config = checkpoint["config"]
-        
-        model = MGTransformer(
-            d_model=model_config["d_model"],
-            nhead=model_config["nhead"],
-            dim_feedforward=model_config["dim_feedforward"],
-            num_layers=model_config["num_layers"],
-            num_classes=len(label_names),
-            cnn_channels=model_config["cnn_channels"],
-            dropout=model_config["dropout"]
-        )
-        model.load_state_dict(checkpoint["model_state_dict"])
-        model.eval()
-        
-        # 加载标准化器
-        scaler_path = model_path.replace('.pth', '_scaler.pkl')
-        if os.path.exists(scaler_path):
-            with open(scaler_path, "rb") as f:
-                scaler = pickle.load(f)
-        else:
-            # 尝试默认的标准化器路径
-            default_scaler_path = 'waveform_scaler.pkl'
-            if os.path.exists(default_scaler_path):
-                with open(default_scaler_path, "rb") as f:
-                    scaler = pickle.load(f)
-        
         return jsonify({
-            'success': True, 
-            'message': '模型加载成功',
-            'label_names': label_names
+            'success': True,
+            'path': model_path,
+            'message': f'模型已保存至 {model_path}'
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logger.error(f"上传模型时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/upload_file', methods=['POST'])
-def upload_file():
+@app.route('/api/upload_csv', methods=['POST'])
+def api_upload_csv():
+    """上传CSV文件API"""
     try:
-        if 'files' not in request.files and 'file' not in request.files:
-            return jsonify({'success': False, 'error': '未找到文件'}), 400
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': '没有文件被上传'})
         
-        # 处理单个文件上传的情况
-        uploaded_files = []
-        if 'file' in request.files:
-            file = request.files['file']
-            if file.filename != '':
-                uploaded_files.append(file)
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '没有选择文件'})
         
-        # 处理多个文件上传的情况
-        if 'files' in request.files:
-            files = request.files.getlist('files')
-            uploaded_files.extend(files)
+        if not file.filename.lower().endswith(('.csv', '.txt')):
+            return jsonify({'success': False, 'error': '只支持CSV或TXT文件'})
         
-        if not uploaded_files:
-            return jsonify({'success': False, 'error': '未选择文件'}), 400
-        
-        file_paths = []
-        for file in uploaded_files:
-            filename = file.filename
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            file_paths.append(file_path)
+        # 保存CSV文件
+        csv_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(csv_path)
         
         return jsonify({
-            'success': True, 
-            'message': f'成功上传 {len(uploaded_files)} 个文件',
-            'file_paths': file_paths
+            'success': True,
+            'path': csv_path,
+            'message': f'CSV文件已保存至 {csv_path}'
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logger.error(f"上传CSV文件时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/train', methods=['POST'])
 def train():
@@ -364,6 +313,330 @@ def predict():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/qtbfs_calculate', methods=['POST'])
+def api_qtbfs_calculate():
+    """计算QTBFS康复评分，支持多文件上传"""
+    session_id = str(uuid.uuid4())
+    session_dir = os.path.join(app.config['TEMP_FOLDER'], session_id)
+    state0_dir = os.path.join(session_dir, 'state0')
+    current_dir = os.path.join(session_dir, 'current')
+    
+    os.makedirs(state0_dir)
+    os.makedirs(current_dir)
+    
+    try:
+        # 1. 保存上传的文件
+        state0_files = request.files.getlist('state0_files')
+        current_files = request.files.getlist('current_files')
+        
+        if not state0_files or not current_files:
+            return jsonify({'success': False, 'error': '缺少必要的文件'})
+
+        # 构建输入数据字典 (供 scorer 使用)
+        input_data = {'state0': {}, 'current_state': {}}
+        
+        def save_and_map(files, target_dir, map_dict):
+            for file in files:
+                if not file.filename: continue
+                safe_name = secure_filename(file.filename)
+                save_path = os.path.join(target_dir, safe_name)
+                file.save(save_path)
+                
+                # 根据文件名解析 key (如 angle_30.csv -> angle_30)
+                # 简单规则：去掉扩展名
+                key = os.path.splitext(safe_name)[0]
+                # 这里可能需要更复杂的正则匹配来剔除多余后缀，如 angle_30_state0 -> angle_30
+                if 'angle_' in key:
+                    # 尝试提取标准 key
+                    import re
+                    match = re.search(r'(angle_\d+)', key)
+                    if match: key = match.group(1)
+                elif 'speed_' in key:
+                    match = re.search(r'(speed_\d+_\ds)', key) # 匹配 speed_30_1s
+                    if match: key = match.group(1)
+                    
+                map_dict[key] = save_path
+
+        save_and_map(state0_files, state0_dir, input_data['state0'])
+        save_and_map(current_files, current_dir, input_data['current_state'])
+        
+        # 2. 调用评分器
+        scorer = QTBFSScorer()
+        result = scorer.calculate_qtbfs_score(input_data)
+        
+        # 3. 清理临时文件
+        shutil.rmtree(session_dir, ignore_errors=True)
+        
+        return jsonify({'success': True, 'result': result})
+        
+    except Exception as e:
+        # 出错也要清理
+        shutil.rmtree(session_dir, ignore_errors=True)
+        logger.error(f"QTBFS评分计算出错: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'details': str(type(e).__name__)
+        }), 500
+
+
+@app.route('/api/upload_for_visualization', methods=['POST'])
+def api_upload_for_visualization():
+    """上传文件用于可视化API，支持CSV和Excel"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': '没有文件被上传'})
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '没有选择文件'})
+        
+        # 检查文件扩展名
+        if not file.filename.lower().endswith(('.csv', '.xlsx', '.xls')):
+            return jsonify({'success': False, 'error': '只支持CSV和Excel文件'})
+        
+        # 保存文件
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        return jsonify({
+            'success': True,
+            'path': file_path,
+            'message': f'文件已保存至 {file_path}'
+        })
+    except Exception as e:
+        logger.error(f"上传文件时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/visualize_split_data', methods=['POST'])
+def api_visualize_split_data():
+    """可视化分割数据波形图API"""
+    try:
+        data = request.json
+        file_path = data.get('file_path')
+        x_axis_column = data.get('x_axis_column', 1)  # 默认为第2列（0索引）
+        y_axis_column = data.get('y_axis_column', 2)  # 默认为第3列（0索引）
+        
+        if not file_path:
+            return jsonify({'success': False, 'error': '没有提供文件路径'})
+        
+        # 根据文件扩展名读取文件
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext == '.csv':
+            # 尝试多种编码格式读取CSV文件
+            encodings = ['utf-8', 'gbk', 'latin1', 'cp1252', 'utf-8-sig']
+            df = None
+            
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(file_path, encoding=encoding)
+                    break  # 成功读取就跳出循环
+                except UnicodeDecodeError:
+                    continue
+                except Exception:
+                    continue
+            
+            if df is None:
+                return jsonify({'success': False, 'error': '无法使用常见编码格式读取CSV文件'})
+                
+        elif file_ext in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            return jsonify({'success': False, 'error': '不支持的文件格式'})
+        
+        # 检查列数是否足够
+        if x_axis_column >= len(df.columns) or y_axis_column >= len(df.columns):
+            return jsonify({'success': False, 'error': f'列索引超出范围，文件只有{len(df.columns)}列'})
+        
+        # 提取指定列的数据
+        x_values = df.iloc[:, x_axis_column].values
+        y_values = df.iloc[:, y_axis_column].values
+        
+        # 为了性能考虑，如果数据点过多，进行降采样
+        max_points = 1000
+        if len(x_values) > max_points:
+            step = len(x_values) // max_points
+            x_values = x_values[::step]
+            y_values = y_values[::step]
+        
+        # 准备返回给前端的数据
+        result_data = {
+            'labels': [f'{x:.2f}' for x in x_values],
+            'data': y_values.tolist(),
+            'x_axis_label': f'第{x_axis_column+1}列',
+            'y_axis_label': f'第{y_axis_column+1}列',
+            'success': True
+        }
+        
+        return jsonify(result_data)
+    except Exception as e:
+        logger.error(f"可视化分割数据时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/split_signal', methods=['POST'])
+def split_signal():
+    """信号数据分割API，支持ZIP下载，现在支持直接上传文件进行分割"""
+    try:
+        # 检查是否有文件上传（multipart/form-data请求）
+        if 'file' in request.files:
+            # 直接上传文件进行分割
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({'success': False, 'error': '没有选择文件'})
+            
+            # 保存上传的文件到临时位置
+            filename = secure_filename(file.filename)
+            temp_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_split_{uuid.uuid4()}_{filename}")
+            file.save(temp_file_path)
+            
+            # 获取分割参数
+            params_str = request.form.get('params')
+            if params_str:
+                try:
+                    params = json.loads(params_str)
+                except json.JSONDecodeError:
+                    return jsonify({'success': False, 'error': '分割参数格式错误'})
+            else:
+                return jsonify({'success': False, 'error': '没有提供分割参数'})
+        else:
+            # 检查Content-Type是否为application/json
+            content_type = request.headers.get('Content-Type', '')
+            if 'application/json' in content_type:
+                # 从JSON请求获取数据
+                data = request.get_json()
+                if data is None:
+                    return jsonify({'success': False, 'error': '无效的JSON数据'})
+            else:
+                # 如果不是application/json，尝试从form中获取
+                data_str = request.form.get('data', '{}')
+                if data_str:
+                    try:
+                        data = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        data = {}
+                else:
+                    data = {}
+            
+            temp_file_path = data.get('file_path')
+            params = data.get('params')  # List of {start, end, name}
+        
+        if not temp_file_path or not params:
+            return jsonify({'success': False, 'error': '缺少文件路径或分割参数'})
+        
+        # 1. 创建临时输出目录
+        session_id = str(uuid.uuid4())
+        session_out_dir = os.path.join(app.config['OUTPUT_FOLDER'], session_id)
+        os.makedirs(session_out_dir)
+        
+        # 2. 执行分割
+        splitter = SignalSplitter()
+        result = splitter.process_file(temp_file_path, params, session_out_dir)
+        
+        if not result.get('success'):
+            return jsonify(result)
+            
+        # 3. 打包成 ZIP
+        zip_filename = f"split_{session_id}.zip"
+        zip_path = os.path.join(app.config['OUTPUT_FOLDER'], zip_filename)
+        
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            for root, dirs, files in os.walk(session_out_dir):
+                for file in files:
+                    zipf.write(os.path.join(root, file), file)
+        
+        # 4. 清理临时文件
+        if os.path.exists(temp_file_path) and 'temp_' in temp_file_path:
+            os.remove(temp_file_path)
+        shutil.rmtree(session_out_dir)
+        
+        return jsonify({
+            'success': True, 
+            'download_url': f'/api/download/{zip_filename}',
+            'message': result.get('message', ''),
+            'file_count': result.get('file_count', 0)
+        })
+        
+    except Exception as e:
+        logger.error(f"信号数据分割时出错: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.errorhandler(415)
+def handle_unsupported_media_type(error):
+    """处理不支持的媒体类型错误"""
+    return jsonify({
+        'success': False,
+        'error': '不支持的媒体类型，请检查请求格式'
+    }), 415
+
+@app.route('/api/preview_split', methods=['POST'])
+def api_preview_split():
+    """分割预览API"""
+    try:
+        # 创建信号分割器实例
+        splitter = SignalSplitter()
+        
+        # 检查是否有文件上传（multipart/form-data请求）
+        if 'file' in request.files:
+            # 处理multipart/form-data格式
+            file = request.files['file']
+            if file.filename != '':
+                # 保存上传的文件
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_preview_{uuid.uuid4()}_{file.filename}")
+                file.save(file_path)
+                
+                # 获取分割参数
+                params_str = request.form.get('params')
+                if params_str:
+                    try:
+                        params = json.loads(params_str)
+                    except json.JSONDecodeError:
+                        params = []
+                else:
+                    params = []
+            else:
+                return jsonify({'success': False, 'error': '没有选择文件'})
+        else:
+            # 检查Content-Type是否为application/json
+            content_type = request.headers.get('Content-Type', '')
+            if 'application/json' in content_type:
+                # 处理application/json格式
+                data = request.get_json()
+                if data is None:
+                    return jsonify({'success': False, 'error': '无效的JSON数据'})
+            else:
+                # 如果不是application/json，尝试从form中获取
+                data_str = request.form.get('data', '{}')
+                if data_str:
+                    try:
+                        data = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        data = {}
+                else:
+                    data = {}
+            
+            file_path = data.get('file_path')
+            params = data.get('params', [])
+            
+            if not file_path:
+                return jsonify({'success': False, 'error': '没有提供文件路径'})
+        
+        if not params:
+            return jsonify({'success': False, 'error': '没有提供分割参数'})
+        
+        # 执行预览
+        result = splitter.preview_split(file_path, params)
+        
+        # 清理临时文件
+        if 'file' in request.files and os.path.exists(file_path):
+            os.remove(file_path)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"分割预览时出错: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)})
+
 def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=None, loaded_scaler=None, label_names=None):
     """对单个波形文件进行分类预测"""
     
@@ -371,13 +644,27 @@ def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=
     file_extension = Path(file_path).suffix.lower()
     
     if file_extension == '.csv':
-        df = pd.read_csv(file_path)
+        # 尝试多种编码格式读取CSV文件
+        encodings = ['utf-8', 'gbk', 'latin1', 'cp1252', 'utf-8-sig']
+        df = None
+        
+        for encoding in encodings:
+            try:
+                df = pd.read_csv(file_path, encoding=encoding)
+                break  # 成功读取就跳出循环
+            except UnicodeDecodeError:
+                continue
+            except Exception:
+                continue
+        
+        if df is None:
+            raise ValueError(f"无法使用常见编码格式读取CSV文件: {file_path}")
     elif file_extension == '.xlsx':
         df = pd.read_excel(file_path, engine='openpyxl')
     elif file_extension == '.xls':
         df = pd.read_excel(file_path, engine='xlrd')
     elif file_extension == '.txt':
-        df = pd.read_csv(file_path, sep='\s+')  # 空格分隔
+        df = pd.read_csv(file_path, sep=r'\s+')  # 空格分隔
     else:
         raise ValueError(f"不支持的文件格式: {file_extension}")
     
@@ -464,12 +751,14 @@ def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=
         "all_probabilities": results
     }
 
+@app.route('/api/download/<filename>', methods=['GET'])
+def download_file(filename):
+    """下载文件API"""
+    return send_from_directory(app.config['OUTPUT_FOLDER'], filename, as_attachment=True)
+
 if __name__ == '__main__':
-    # 初始化系统
-    initialize_system()
+    logger.info("膝关节康复角度波形分类系统后端服务器启动中...")
+    logger.info("请访问 http://localhost:5000 查看前端界面")
+    logger.info("访问 http://localhost:5000?lang=en 查看英文界面")
     
-    print("膝关节康复角度波形分类系统后端服务器启动中...")
-    print("请访问 http://localhost:5000 查看前端界面")
-    print("访问 http://localhost:5000?lang=en 查看英文界面")
-    
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=True)

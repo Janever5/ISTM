@@ -887,6 +887,41 @@
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
         }
+        
+        /* 表格样式 */
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .param-table th,
+        .param-table td {
+            border: 1px solid #ddd;
+            padding: 0.8rem;
+            text-align: left;
+        }
+        
+        .param-table th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        
+        .param-table input[type="number"],
+        .param-table input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -909,6 +944,8 @@
                     <li class="active" onclick="switchTab('train')"><i class="fas fa-brain"></i> <span>🧠 模型训练</span></li>
                     <li onclick="switchTab('predict')"><i class="fas fa-search"></i> <span>🔍 波形预测</span></li>
                     <li onclick="switchTab('visualize')"><i class="fas fa-chart-line"></i> <span>📊 数据可视化</span></li>
+                    <li onclick="switchTab('split')"><i class="fas fa-cut"></i> <span>✂️ 数据分割</span></li>
+                    <li onclick="switchTab('qtbfs')"><i class="fas fa-heartbeat"></i> <span>❤️ QTBFS康复评分</span></li>
                     <li onclick="switchTab('analysis')"><i class="fas fa-robot"></i> <span>🤖 AI分析</span></li>
                 </ul>
 
@@ -1158,6 +1195,122 @@
                     </div>
                 </div>
 
+                <!-- 数据分割模块 -->
+                <div id="split-tab" class="tab-content" style="display: none;">
+                    <div class="content-header">
+                        <h2>✂️ 数据分割</h2>
+                    </div>
+
+                    <!-- 数据分割配置表单 -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> 数据分割配置</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="splitFile">📄 上传CSV文件</label>
+                                <div class="file-upload-area" id="splitFileUploadArea" ondrop="handleSplitFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>拖拽CSV文件到此处上传</p>
+                                    <p>或</p>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('splitFileInput').click()">
+                                        <i class="fas fa-file-import"></i> 选择CSV文件
+                                    </button>
+                                    <input type="file" id="splitFileInput" style="display: none;" accept=".csv" onchange="handleSplitFileSelect(event)">
+                                </div>
+                                <div id="splitFileInfo" class="file-info" style="display: none; margin-top: 1rem;">
+                                    <i class="fas fa-file-alt"></i>
+                                    <span>已选择文件: <span id="splitFileName"></span></span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="segmentCount">🔢 分割段数</label>
+                                <input type="number" id="segmentCount" class="form-control" value="1" min="1" max="20">
+                                <button class="btn btn-secondary" onclick="confirmSegmentCount()" style="margin-top: 10px;">确认段数</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分割参数表格 -->
+                    <div class="form-section" id="splitParamsSection" style="display: none;">
+                        <h3><i class="fas fa-table"></i> 分割参数设置</h3>
+                        <div class="table-container">
+                            <table class="param-table">
+                                <thead>
+                                    <tr>
+                                        <th>段号</th>
+                                        <th>起始点(X)</th>
+                                        <th>结束点(X)</th>
+                                        <th>段名称</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="splitParamsTableBody">
+                                    <!-- 动态生成行 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-secondary" onclick="previewSplit()" style="margin-top: 15px;">
+                            <i class="fas fa-eye"></i> 预览分割效果
+                        </button>
+                        <button class="btn btn-primary" onclick="executeSplit()" style="margin-top: 15px; margin-left: 10px;">
+                            <i class="fas fa-scissors"></i> 执行分割并保存
+                        </button>
+                    </div>
+                </div>
+
+                <!-- QTBFS康复评分模块 -->
+                <div id="qtbfs-tab" class="tab-content" style="display: none;">
+                    <div class="content-header">
+                        <h2>❤️ QTBFS康复评分系统</h2>
+                    </div>
+
+                    <!-- QTBFS评分配置表单 -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> 评分配置</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="state0Files">📁 状态0参考文件 (可选)</label>
+                                <div class="file-upload-area" id="state0UploadArea" ondrop="handleState0Drop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                    <i class="fas fa-folder-open"></i>
+                                    <p>拖拽包含状态0数据的文件夹</p>
+                                    <p>或</p>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('state0FolderInput').click()">
+                                        <i class="fas fa-folder-open"></i> 选择文件夹
+                                    </button>
+                                    <input type="file" id="state0FolderInput" style="display: none;" webkitdirectory directory onchange="handleState0Select(event)">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="currentFiles">📁 当前状态文件</label>
+                                <div class="file-upload-area" id="currentUploadArea" ondrop="handleCurrentDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                    <i class="fas fa-folder-open"></i>
+                                    <p>拖拽当前待评估状态数据文件</p>
+                                    <p>或</p>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('currentFolderInput').click()">
+                                        <i class="fas fa-folder-open"></i> 选择文件夹
+                                    </button>
+                                    <input type="file" id="currentFolderInput" style="display: none;" webkitdirectory directory onchange="handleCurrentSelect(event)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="calculateQTBFSScore()" style="margin-top: 20px;">
+                            <i class="fas fa-calculator"></i> 计算QTBFS评分
+                        </button>
+                    </div>
+
+                    <!-- 评分结果 -->
+                    <div class="results-section">
+                        <h3><i class="fas fa-poll"></i> 评分结果</h3>
+                        <div id="qtbfsResults">
+                            <div style="text-align: center; padding: 2rem; color: #6c757d;">
+                                <i class="fas fa-heartbeat" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                <p style="font-size: 1.2rem;">请上传数据并点击"计算QTBFS评分"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- AI分析模块 -->
                 <div id="analysis-tab" class="tab-content" style="display: none;">
                     <div class="content-header">
@@ -1231,6 +1384,9 @@
         let selectedModelFile = null;
         let selectedDataFile = null;
         let selectedVisFile = null;
+        let selectedSplitFile = null;
+        let state0Files = [];
+        let currentFiles = [];
 
         // 显示通知
         function showNotification(message, type = 'info') {
@@ -1251,12 +1407,24 @@
                 tab.classList.remove('active');
             });
             
-            // 显示对应的标签页内容
+            // 找到当前被点击的标签并高亮
+            if (event && event.target) {
+                const clickedLi = event.target.closest('li');
+                if (clickedLi) {
+                    clickedLi.classList.add('active');
+                }
+            }
+            
+            // 隐藏所有标签页内容
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.style.display = 'none';
             });
             
-            document.getElementById(tabName + '-tab').style.display = 'block';
+            // 显示对应的标签页内容
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.style.display = 'block';
+            }
         }
         
         // 切换AI助手对话框
@@ -1922,6 +2090,407 @@
                     </div>
                     
                     <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
+                        <i class="fas fa-check-circle"></i> 康复建议
+                    </h4>
+                    <div style="margin-bottom: 1.5rem;">
+            `;
+            
+            selectedRecommendations.forEach(recommendation => {
+                reportHTML += `
+                    <p style="margin-bottom: 0.5rem;">${recommendation}</p>
+                `;
+            });
+            
+            reportHTML += `
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('aiReport').innerHTML = reportHTML;
+        }
+        
+        // 数据分割文件处理
+        function handleSplitFileDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const uploadArea = e.target.closest('.file-upload-area');
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleSplitFiles(e.dataTransfer.files);
+            }
+        }
+        
+        function handleSplitFileSelect(e) {
+            if (e.target.files.length) {
+                handleSplitFiles(e.target.files);
+            }
+        }
+        
+        function handleSplitFiles(files) {
+            const file = files[0];
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showNotification('请上传CSV格式的文件', 'error');
+                return;
+            }
+            
+            selectedSplitFile = file;
+            document.getElementById('splitFileName').textContent = file.name;
+            document.getElementById('splitFileInfo').style.display = 'flex';
+            showNotification(`已选择文件: ${file.name}`, 'info');
+        }
+        
+        // 确认分割段数
+        function confirmSegmentCount() {
+            const segmentCount = parseInt(document.getElementById('segmentCount').value);
+            if (isNaN(segmentCount) || segmentCount <= 0) {
+                showNotification('请输入有效的分割段数', 'error');
+                return;
+            }
+            
+            generateSplitParamsTable(segmentCount);
+            document.getElementById('splitParamsSection').style.display = 'block';
+        }
+        
+        // 生成分割参数表格
+        function generateSplitParamsTable(count) {
+            const tbody = document.getElementById('splitParamsTableBody');
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < count; i++) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td><input type="number" id="start_${i}" step="any" value="${i * 10.0}"></td>
+                    <td><input type="number" id="end_${i}" step="any" value="${(i + 1) * 10.0}"></td>
+                    <td><input type="text" id="name_${i}" placeholder="如: angle_30_state0" value="segment_${i + 1}">
+                `;
+                tbody.appendChild(row);
+            }
+        }
+        
+        // 预览分割效果
+        function previewSplit() {
+            if (!selectedSplitFile) {
+                showNotification('请先选择文件', 'error');
+                return;
+            }
+            
+            const segmentCount = parseInt(document.getElementById('segmentCount').value);
+            const params = [];
+            
+            for (let i = 0; i < segmentCount; i++) {
+                const start = parseFloat(document.getElementById(`start_${i}`).value);
+                const end = parseFloat(document.getElementById(`end_${i}`).value);
+                const name = document.getElementById(`name_${i}`).value.trim();
+                
+                if (isNaN(start) || isNaN(end) || !name) {
+                    showNotification(`请检查第${i + 1}行参数`, 'error');
+                    return;
+                }
+                
+                params.push({ start, end, name });
+            }
+            
+            // 发送预览请求
+            const formData = new FormData();
+            formData.append('file', selectedSplitFile);
+            formData.append('params', JSON.stringify(params));
+            
+            fetch('/api/preview_split', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('预览成功，数据格式正确', 'success');
+                } else {
+                    showNotification(`预览失败: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('预览分割时出错:', error);
+                showNotification('预览分割时出错', 'error');
+            });
+        }
+        
+        // 执行分割
+        function executeSplit() {
+            if (!selectedSplitFile) {
+                showNotification('请先选择文件', 'error');
+                return;
+            }
+            
+            const segmentCount = parseInt(document.getElementById('segmentCount').value);
+            const params = [];
+            
+            for (let i = 0; i < segmentCount; i++) {
+                const start = parseFloat(document.getElementById(`start_${i}`).value);
+                const end = parseFloat(document.getElementById(`end_${i}`).value);
+                const name = document.getElementById(`name_${i}`).value.trim();
+                
+                if (isNaN(start) || isNaN(end) || !name) {
+                    showNotification(`请检查第${i + 1}行参数`, 'error');
+                    return;
+                }
+                
+                params.push({ start, end, name });
+            }
+            
+            // 发送分割请求 - 直接上传文件进行分割
+            const formData = new FormData();
+            formData.append('file', selectedSplitFile);  // 直接上传文件
+            formData.append('params', JSON.stringify(params));  // 参数以JSON字符串形式传递
+            
+            fetch('/api/split_signal', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`分割完成！生成了${data.file_count}个文件，准备下载`, 'success');
+                    
+                    // 触发下载
+                    if (data.download_url) {
+                        const link = document.createElement('a');
+                        link.href = data.download_url;
+                        link.download = '';
+                        link.click();
+                        
+                        showNotification('文件已开始下载', 'info');
+                    }
+                } else {
+                    showNotification(`分割失败: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('执行分割时出错:', error);
+                showNotification('执行分割时出错', 'error');
+            });
+        }
+
+        // 处理状态0文件
+        function handleState0Drop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const uploadArea = e.target.closest('.file-upload-area');
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.items) {
+                const files = Array.from(e.dataTransfer.items)
+                    .filter(item => item.kind === 'file')
+                    .map(item => item.getAsFile());
+                state0Files = files;
+                showNotification(`已选择${files.length}个状态0参考文件`, 'info');
+            }
+        }
+        
+        function handleState0Select(e) {
+            state0Files = Array.from(e.target.files);
+            showNotification(`已选择${state0Files.length}个状态0参考文件`, 'info');
+        }
+        
+        // 处理当前状态文件
+        function handleCurrentDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const uploadArea = e.target.closest('.file-upload-area');
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.items) {
+                const files = Array.from(e.dataTransfer.items)
+                    .filter(item => item.kind === 'file')
+                    .map(item => item.getAsFile());
+                currentFiles = files;
+                showNotification(`已选择${currentFiles.length}个当前状态文件`, 'info');
+            }
+        }
+        
+        function handleCurrentSelect(e) {
+            currentFiles = Array.from(e.target.files);
+            showNotification(`已选择${currentFiles.length}个当前状态文件`, 'info');
+        }
+        
+        // 计算QTBFS评分
+        function calculateQTBFSScore() {
+            if (currentFiles.length === 0) {
+                showNotification('请上传当前状态文件', 'error');
+                return;
+            }
+            
+            // 这里应该构建请求数据并发送到后端
+            const formData = new FormData();
+            
+            // 添加当前状态文件
+            currentFiles.forEach((file, index) => {
+                formData.append(`current_files_${index}`, file);
+            });
+            
+            // 添加状态0文件（如果有）
+            state0Files.forEach((file, index) => {
+                formData.append(`state0_files_${index}`, file);
+            });
+            
+            // 发送评分请求
+            fetch('/api/qtbfs_calculate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayQTBFSResult(data.result);
+                    showNotification('QTBFS评分计算完成', 'success');
+                } else {
+                    showNotification(`评分计算失败: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('计算QTBFS评分时出错:', error);
+                showNotification('计算QTBFS评分时出错', 'error');
+            });
+        }
+        
+        // 显示QTBFS评分结果
+        function displayQTBFSResult(result) {
+            const container = document.getElementById('qtbfsResults');
+            
+            let resultHTML = `
+                <div style="padding: 1.5rem;">
+                    <h3 style="color: #2c3e50; margin-bottom: 1.5rem; font-size: 1.4rem;">
+                        <i class="fas fa-heartbeat"></i> QTBFS康复评分结果
+                    </h3>
+                    
+                    <div style="background: linear-gradient(135deg, #ffebee, #ffcdd2); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
+                            <strong>📅 评估时间:</strong> ${new Date().toLocaleString()}
+                        </p>
+                        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">
+                            <strong>❤️ QTBFS总分:</strong> <span style="color: #e74c3c; font-weight: bold; font-size: 1.8rem;">${result.total_score}</span>/100
+                        </p>
+                        <p style="font-size: 1.2rem;">
+                            <strong>📋 康复阶段:</strong> <span style="color: #2ecc71; font-weight: bold;">${result.stage}</span>
+                        </p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="stat-card" style="border-top-color: #3498db;">
+                            <h3><i class="fas fa-weight"></i> 域I: 力学承载能力</h3>
+                            <div class="stat-value" style="color: #3498db;">${result.domain_I.total}/40</div>
+                            <div class="stat-label">子维度A: ${result.domain_I.subA_score}/20 - 峰值响应能力</div>
+                            <div class="stat-label">子维度B: ${result.domain_I.subB_score}/12 - 角度响应曲线</div>
+                            <div class="stat-label">子维度C: ${result.domain_I.subC_score}/8 - 大角度响应</div>
+                        </div>
+                        
+                        <div class="stat-card" style="border-top-color: #e74c3c;">
+                            <h3><i class="fas fa-tachometer-alt"></i> 域II: 动态适应能力</h3>
+                            <div class="stat-value" style="color: #e74c3c;">${result.domain_II.total}/35</div>
+                            <div class="stat-label">子维度A: ${result.domain_II.subA_score}/15 - 速度梯度响应</div>
+                            <div class="stat-label">子维度B: ${result.domain_II.subB_score}/12 - 重复稳定性</div>
+                            <div class="stat-label">子维度C: ${result.domain_II.subC_score}/8 - 速度-角度交互</div>
+                        </div>
+                        
+                        <div class="stat-card" style="border-top-color: #f39c12;">
+                            <h3><i class="fas fa-bolt"></i> 域III: 功能储备能力</h3>
+                            <div class="stat-value" style="color: #f39c12;">${result.domain_III.total}/25</div>
+                            <div class="stat-label">子维度A: ${result.domain_III.subA_score}/10 - 快速响应效率</div>
+                            <div class="stat-label">子维度B: ${result.domain_III.subB_score}/10 - 极限条件响应</div>
+                            <div class="stat-label">子维度C: ${result.domain_III.subC_score}/5 - 信号质量指数</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px;">
+                        <h4 style="color: #3498db; margin-bottom: 1rem;">详细分析</h4>
+                        <p><strong>域I详情:</strong> ${result.domain_I.subA_detail.avg_retention ? `平均保留率 ${Math.round(result.domain_I.subA_detail.avg_retention*100)}%` : ''}</p>
+                        <p><strong>域II详情:</strong> ${result.domain_II.subA_detail.avg_consistency ? `平均速度一致性 ${Math.round(result.domain_II.subA_detail.avg_consistency*100)}%` : ''}</p>
+                        <p><strong>域III详情:</strong> ${result.domain_III.subC_detail.snr_db ? `信噪比 ${result.domain_III.subC_detail.snr_db.toFixed(2)} dB` : ''}</p>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = resultHTML;
+        }
+        
+        // 生成AI分析报告（续）
+        function generateAIReport(predictedClass, confidence, probabilities) {
+            const sortedProbs = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
+            
+            // 生成专业医生风格的康复建议
+            const recommendations = [
+                "建议继续当前康复训练方案，保持每周3-4次的训练频率。",
+                "根据当前角度表现，可适当增加该角度的训练强度和持续时间。",
+                "注意训练过程中如有不适感应立即停止，并及时就医复查。",
+                "建议配合物理治疗师进行手法治疗，以加速康复进程。",
+                "可增加日常生活中的功能性训练，如上下楼梯、蹲起等动作。",
+                "保持良好的生活习惯，保证充足睡眠，有助于组织修复。"
+            ];
+            
+            // 随机选择2-3条建议
+            const selectedRecommendations = [];
+            const numRecommendations = Math.floor(Math.random() * 2) + 2; // 2-3条
+            for (let i = 0; i < numRecommendations; i++) {
+                const randomIndex = Math.floor(Math.random() * recommendations.length);
+                if (!selectedRecommendations.includes(recommendations[randomIndex])) {
+                    selectedRecommendations.push(recommendations[randomIndex]);
+                }
+            }
+            
+            let reportHTML = `
+                <div style="padding: 1.5rem;">
+                    <h3 style="color: #2c3e50; margin-bottom: 1.5rem; font-size: 1.4rem;">
+                        <i class="fas fa-file-medical-alt"></i> 康复评估报告
+                    </h3>
+                    
+                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
+                            <strong>📅 评估时间:</strong> ${new Date().toLocaleString()}
+                        </p>
+                        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">
+                            <strong>🎯 主要角度:</strong> 您的膝关节当前主要活动角度为 <span style="color: #3498db; font-weight: bold;">${predictedClass}</span>
+                        </p>
+                        <p style="font-size: 1.2rem;">
+                            <strong>📊 主角度匹配度:</strong> <span style="color: #2ecc71; font-weight: bold;">${(confidence * 100).toFixed(2)}%</span>
+                        </p>
+                    </div>
+                    
+                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
+                        <i class="fas fa-list-ol"></i> 各角度成分分析
+                    </h4>
+                    <div style="margin-bottom: 1.5rem;">
+            `;
+            
+            sortedProbs.forEach(([angle, prob], index) => {
+                const marker = index === 0 ? '🏆' : (index < 3 ? '⭐' : '▫️');
+                const level = prob > 0.7 ? '优秀' : prob > 0.5 ? '良好' : prob > 0.3 ? '一般' : '较差';
+                reportHTML += `
+                    <p style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${marker} ${angle} (${level})</span>
+                        <span style="font-weight: bold; color: ${index === 0 ? '#3498db' : '#6c757d'}">${(prob * 100).toFixed(2)}%</span>
+                    </p>
+                `;
+            });
+            
+            reportHTML += `
+                    </div>
+                    
+                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
+                        <i class="fas fa-check-circle"></i> 康复建议
+                    </h4>
+                    <div style="margin-bottom: 1.5rem;">
+            `;
+            
+            selectedRecommendations.forEach(recommendation => {
+                reportHTML += `
+                    <p style="margin-bottom: 0.5rem;">${recommendation}</p>
+                `;
+            });
+            
+            reportHTML += `
+                    </div>
+                    
+                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
                         <i class="fas fa-stethoscope"></i> 医生专业建议
                     </h4>
                     <div style="background: #fff8e1; padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
@@ -2081,4 +2650,6 @@
         });
     </script>
 </body>
+</html>
+
 </html>
