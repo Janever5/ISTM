@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>肩关节康复训练</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.3) 0%, rgba(255, 182, 193, 0.3) 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(135, 206, 250, 0.2);
+            border-bottom: 1px solid rgba(135, 206, 250, 0.1);
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .patient-info {
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .container {
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(135, 206, 250, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .today-plan {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .today-plan h2 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .plan-status {
+            background: linear-gradient(90deg, rgba(135, 206, 250, 0.8), rgba(100, 149, 237, 0.9));
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(135, 206, 250, 0.3);
+        }
+        
+        .exercise-monitor {
+            text-align: center;
+            position: relative;
+        }
+        
+        .shoulder-diagram {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+        }
+        
+        .shoulder-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .angle-arc {
+            stroke: rgba(255, 182, 193, 0.6);
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 5,5;
+            animation: dash 2s linear infinite;
+        }
+        
+        .angle-line {
+            stroke: rgba(135, 206, 250, 0.8);
+            stroke-width: 2;
+            transition: all 0.3s ease;
+        }
+        
+        @keyframes dash {
+            to { stroke-dashoffset: -10; }
+        }
+        
+        .exercise-title {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+        
+        .angle-display {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 20px auto;
+            background: conic-gradient(from 0deg, rgba(240, 248, 255, 0.8) 0deg, rgba(135, 206, 250, 0.7) var(--angle, 0deg), rgba(240, 248, 255, 0.8) var(--angle, 0deg));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(135, 206, 250, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        .angle-inner {
+            width: 130px;
+            height: 130px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 4px 15px rgba(135, 206, 250, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .current-angle {
+            font-size: 28px;
+            font-weight: bold;
+            color: rgba(135, 206, 250, 1);
+            text-shadow: 0 2px 4px rgba(135, 206, 250, 0.2);
+        }
+        
+        .angle-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        .target-range {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(240, 248, 255, 0.6);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(135, 206, 250, 0.2);
+        }
+        
+        .range-item {
+            text-align: center;
+        }
+        
+        .range-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+        
+        .range-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .progress-section {
+            margin-bottom: 20px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(135, 206, 250, 0.8), rgba(255, 182, 193, 0.8));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 2px 8px rgba(135, 206, 250, 0.3);
+        }
+        
+        .exercise-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, rgba(135, 206, 250, 0.9), rgba(100, 149, 237, 1));
+            color: white;
+            box-shadow: 0 4px 15px rgba(135, 206, 250, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: rgba(135, 206, 250, 1);
+            border: 1px solid rgba(135, 206, 250, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 182, 193, 0.8);
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
+        }
+        
+        .weekly-progress {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .day-progress {
+            text-align: center;
+            padding: 10px 5px;
+            border-radius: 12px;
+            background: rgba(240, 248, 255, 0.6);
+            font-size: 12px;
+            border: 1px solid rgba(135, 206, 250, 0.2);
+        }
+        
+        .day-progress.completed {
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.8), rgba(100, 149, 237, 0.9));
+            color: white;
+            box-shadow: 0 2px 8px rgba(135, 206, 250, 0.3);
+        }
+        
+        .day-progress.today {
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.8), rgba(255, 105, 180, 0.9));
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
+        }
+        
+        .pain-feedback {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .pain-scale {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .pain-level {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .pain-level.selected {
+            background: rgba(255, 182, 193, 0.9);
+            color: white;
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(255, 182, 193, 0.4);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .ai-tips {
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.8), rgba(255, 182, 193, 0.7));
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(135, 206, 250, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .ai-tips h3 {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .tips-content {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 肩关节康复训练</h1>
+        <div class="patient-info">张先生 (45岁) | 术后第4周</div>
+    </div>
+    
+    <div class="container">
+        <!-- AI智能提醒 -->
+        <div class="ai-tips">
+            <h3>🤖 AI智能提醒</h3>
+            <div class="tips-content">
+                训练时保持动作缓慢平稳，如感到疼痛请立即停止。今日建议重点进行外展训练，角度控制在0-60°。
+            </div>
+        </div>
+        
+        <!-- 今日训练计划 -->
+        <div class="card today-plan">
+            <h2>📅 今日训练计划</h2>
+            <div class="plan-status">肩袖修复术后早期方案 - 第4周</div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>AI监测中...</span>
+            </div>
+        </div>
+        
+        <!-- 实时运动监测 -->
+        <div class="card exercise-monitor">
+            <div class="exercise-title">🎯 当前训练：外展训练 (0-60°)</div>
+            
+            <!-- 肩关节示意图 -->
+            <div class="shoulder-diagram">
+                <svg class="shoulder-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- 肩膀轮廓 -->
+                    <ellipse cx="60" cy="45" rx="25" ry="15" fill="rgba(135, 206, 250, 0.3)" stroke="rgba(135, 206, 250, 0.6)" stroke-width="2"/>
+                    
+                    <!-- 手臂 -->
+                    <line x1="60" y1="45" x2="60" y2="85" stroke="rgba(135, 206, 250, 0.8)" stroke-width="4" stroke-linecap="round" id="arm-line"/>
+                    
+                    <!-- 运动弧线 -->
+                    <path d="M 35 45 A 25 25 0 0 0 85 45" class="angle-arc"/>
+                    
+                    <!-- 角度标记点 -->
+                    <circle cx="35" cy="45" r="3" fill="rgba(255, 182, 193, 0.8)"/>
+                    <circle cx="85" cy="45" r="3" fill="rgba(255, 182, 193, 0.8)"/>
+                    
+                    <!-- 角度文字 -->
+                    <text x="30" y="40" font-size="10" fill="rgba(135, 206, 250, 0.8)">0°</text>
+                    <text x="85" y="40" font-size="10" fill="rgba(135, 206, 250, 0.8)">60°</text>
+                    
+                    <!-- 关节点 -->
+                    <circle cx="60" cy="45" r="4" fill="rgba(255, 182, 193, 0.9)" stroke="white" stroke-width="2"/>
+                </svg>
+            </div>
+            
+            <div class="angle-display" style="--angle: 45deg;">
+                <div class="angle-inner">
+                    <div class="current-angle">45°</div>
+                    <div class="angle-label">当前角度</div>
+                </div>
+            </div>
+            
+            <div class="target-range">
+                <div class="range-item">
+                    <div class="range-label">目标范围</div>
+                    <div class="range-value">0° - 60°</div>
+                </div>
+                <div class="range-item">
+                    <div class="range-label">完成次数</div>
+                    <div class="range-value">8/10</div>
+                </div>
+                <div class="range-item">
+                    <div class="range-label">保持时间</div>
+                    <div class="range-value">3秒</div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span>训练进度</span>
+                    <span>80%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 80%"></div>
+                </div>
+            </div>
+            
+            <div class="exercise-controls">
+                <button class="btn btn-secondary" onclick="pauseExercise()">⏸️ 暂停</button>
+                <button class="btn btn-primary" onclick="startExercise()">▶️ 开始训练</button>
+            </div>
+        </div>
+        
+        <!-- 本周康复进度 -->
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">📊 本周康复进度</h3>
+            <div class="weekly-progress">
+                <div class="day-progress completed">
+                    <div>周一</div>
+                    <div>✓</div>
+                </div>
+                <div class="day-progress completed">
+                    <div>周二</div>
+                    <div>✓</div>
+                </div>
+                <div class="day-progress completed">
+                    <div>周三</div>
+                    <div>✓</div>
+                </div>
+                <div class="day-progress today">
+                    <div>周四</div>
+                    <div>80%</div>
+                </div>
+                <div class="day-progress">
+                    <div>周五</div>
+                    <div>-</div>
+                </div>
+                <div class="day-progress">
+                    <div>周六</div>
+                    <div>-</div>
+                </div>
+                <div class="day-progress">
+                    <div>周日</div>
+                    <div>-</div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span>总体康复进度</span>
+                    <span>65%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 65%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 疼痛反馈 -->
+        <div class="card pain-feedback">
+            <h3 style="margin-bottom: 15px;">😊 疼痛程度反馈</h3>
+            <div class="pain-scale">
+                <div class="pain-level" onclick="selectPain(0)">0</div>
+                <div class="pain-level" onclick="selectPain(1)">1</div>
+                <div class="pain-level" onclick="selectPain(2)">2</div>
+                <div class="pain-level" onclick="selectPain(3)">3</div>
+                <div class="pain-level selected" onclick="selectPain(4)">4</div>
+                <div class="pain-level" onclick="selectPain(5)">5</div>
+                <div class="pain-level" onclick="selectPain(6)">6</div>
+                <div class="pain-level" onclick="selectPain(7)">7</div>
+                <div class="pain-level" onclick="selectPain(8)">8</div>
+                <div class="pain-level" onclick="selectPain(9)">9</div>
+                <div class="pain-level" onclick="selectPain(10)">10</div>
+            </div>
+            <div style="font-size: 12px; color: #718096; margin-top: 10px;">
+                0=无痛 | 5=中等疼痛 | 10=剧痛
+            </div>
+        </div>
+        
+        <!-- 下一步训练 -->
+        <div class="card" style="text-align: center;">
+            <h3 style="margin-bottom: 15px;">⏭️ 下一项训练</h3>
+            <div style="color: #718096; margin-bottom: 15px;">内旋训练 (0-30°)</div>
+            <button class="btn btn-primary" onclick="nextExercise()">开始下一项</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentAngle = 0;
+        let isTraining = false;
+        let currentPain = 4;
+        
+        function startExercise() {
+            isTraining = true;
+            document.querySelector('.btn-primary').textContent = '🔄 训练中...';
+            simulateMovement();
+        }
+        
+        function pauseExercise() {
+            isTraining = false;
+            document.querySelector('.btn-primary').textContent = '▶️ 继续训练';
+        }
+        
+        function simulateMovement() {
+            if (!isTraining) return;
+            
+            // 模拟角度变化
+            currentAngle += Math.random() * 5 - 2.5;
+            currentAngle = Math.max(0, Math.min(60, currentAngle));
+            
+            const angleDisplay = document.querySelector('.angle-display');
+            const angleText = document.querySelector('.current-angle');
+            const armLine = document.getElementById('arm-line');
+            
+            angleDisplay.style.setProperty('--angle', `${currentAngle * 6}deg`);
+            angleText.textContent = `${Math.round(currentAngle)}°`;
+            
+            // 更新肩关节示意图中的手臂角度
+            const armAngle = (currentAngle - 30) * Math.PI / 180; // 转换为弧度，-30度是为了让0度时手臂垂直
+            const armEndX = 60 + Math.sin(armAngle) * 40;
+            const armEndY = 45 + Math.cos(armAngle) * 40;
+            armLine.setAttribute('x2', armEndX);
+            armLine.setAttribute('y2', armEndY);
+            
+            // 根据角度范围改变颜色
+            if (currentAngle >= 0 && currentAngle <= 60) {
+                angleText.style.color = 'rgba(135, 206, 250, 1)'; // 蓝色 - 正确范围
+                armLine.setAttribute('stroke', 'rgba(135, 206, 250, 0.8)');
+            } else {
+                angleText.style.color = 'rgba(255, 182, 193, 1)'; // 粉红色 - 超出范围
+                armLine.setAttribute('stroke', 'rgba(255, 182, 193, 0.8)');
+            }
+            
+            setTimeout(simulateMovement, 200);
+        }
+        
+        function selectPain(level) {
+            document.querySelectorAll('.pain-level').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            currentPain = level;
+            
+            // 发送疼痛反馈给医生端
+            console.log(`疼痛等级: ${level}`);
+        }
+        
+        function nextExercise() {
+            alert('准备开始内旋训练，请保持动作缓慢...');
+        }
+        
+        // 页面加载时开始模拟数据
+        window.onload = function() {
+            startExercise();
+        }
+    </script>
+</body>
+</html>

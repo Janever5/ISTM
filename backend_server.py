@@ -1,10 +1,14 @@
 import json
 import os
+import zipfile
+import uuid
+from flask import Flask, request, jsonify, send_from_directory, render_template
+from werkzeug.utils import secure_filename
 import logging
 import re
 import numpy as np
 import pandas as pd
-from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask import Flask, request, jsonify, send_from_directory, send_file, render_template
 from flask_cors import CORS
 import torch
 import torch.nn as nn
@@ -52,7 +56,7 @@ except Exception as e:
     logger.error(f"系统初始化失败: {e}")
     raise
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)  # 允许跨域请求
 
 # 目录配置
@@ -92,13 +96,9 @@ def index():
     # 检查是否请求英文版
     lang = request.args.get('lang', 'zh')
     if lang == 'en':
-        return send_from_directory('.', 'waveform_miniprogram_en.html')
+        return render_template('waveform_miniprogram_en.html')
     else:
-        return send_from_directory('.', 'waveform_miniprogram.html')
-
-@app.route('/<path:path>')
-def static_files(path):
-    return send_from_directory('.', path)
+        return render_template('waveform_miniprogram.html')
 
 @app.route('/api/upload_model', methods=['POST'])
 def api_upload_model():
@@ -122,6 +122,43 @@ def api_upload_model():
         })
     except Exception as e:
         logger.error(f"上传模型时出错: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/upload_dataset', methods=['POST'])
+def api_upload_dataset():
+    """上传数据集ZIP文件API"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': '没有文件被上传'})
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '没有选择文件'})
+        
+        if not file.filename.lower().endswith('.zip'):
+            return jsonify({'success': False, 'error': '只支持ZIP格式的数据集文件'})
+        
+        # 保存数据集ZIP文件
+        zip_filename = secure_filename(file.filename)
+        zip_path = os.path.join(app.config['UPLOAD_FOLDER'], zip_filename)
+        file.save(zip_path)
+        
+        # 创建唯一的解压目录名
+        extract_dir_name = f"dataset_{uuid.uuid4().hex}"
+        extract_dir = os.path.join(app.config['UPLOAD_FOLDER'], extract_dir_name)
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        # 解压ZIP文件
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        return jsonify({
+            'success': True,
+            'dataset_path': extract_dir,
+            'message': f'数据集已解压至 {extract_dir}'
+        })
+    except Exception as e:
+        logger.error(f"上传数据集时出错: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/upload_csv', methods=['POST'])

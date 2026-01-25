@@ -91,6 +91,13 @@ def preprocess_signal(data, fs=100):
     # 1. 去除NaN
     data = np.nan_to_num(data, nan=np.nanmean(data))
     
+    # 如果数据太短，跳过滤波直接返回
+    if len(data) < 15:
+        # 对于短信号，只做简单的基线校正
+        if len(data) > 0:
+            data = data - np.mean(data)
+        return data
+    
     # 2. 低通滤波去除高频噪声（人体运动很少超过20Hz）
     nyquist = fs / 2
     cutoff = 20  # Hz
@@ -98,7 +105,7 @@ def preprocess_signal(data, fs=100):
     data_filtered = filtfilt(b, a, data)
     
     # 3. 基线漂移校正
-    data_filtered = data_filtered - np.mean(data_filtered[:10])  # 减去起始基线
+    data_filtered = data_filtered - np.mean(data_filtered[:min(10, len(data_filtered))])  # 减去起始基线
     
     return data_filtered
 
@@ -145,7 +152,17 @@ def find_data_column(df):
         if len(numeric_cols) > 0:
             target_col = numeric_cols[0]
         else:
-            raise ValueError(f"未找到有效数据列，可用列: {df.columns.tolist()}")
+            # 如果没有数值列，尝试使用第一列（可能是字符串但可转换为数值）
+            if len(df.columns) > 0:
+                first_col = df.columns[0]
+                # 尝试转换第一列为数值
+                try:
+                    pd.to_numeric(df[first_col], errors='raise')
+                    target_col = first_col
+                except (ValueError, TypeError):
+                    raise ValueError(f"未找到有效数据列，可用列: {df.columns.tolist()}")
+            else:
+                raise ValueError(f"DataFrame为空或没有列，可用列: {df.columns.tolist()}")
     
     return target_col
 
@@ -199,12 +216,23 @@ class WaveformDataset(Dataset):
         self.labels = []
         self.label_names = []
         
+        # 定义有效的数据文件扩展名
+        data_extensions = {'.csv', '.xlsx', '.xls', '.txt'}
+        
         # 获取所有子目录作为类别
         class_dirs = [d for d in self.data_dir.iterdir() if d.is_dir()]
-        if not class_dirs:  # 如果没有子目录，则遍历所有文件
-            files = list(self.data_dir.glob('*'))
-            labels = list(set([f.stem.split('.')[0] for f in files]))  # 使用文件名作为标签
-            self.label_names = sorted(labels)
+        if not class_dirs:  # 如果没有子目录，则遍历所有有效数据文件
+            # 只获取有效的数据文件
+            valid_files = []
+            for file_path in self.data_dir.iterdir():
+                if file_path.is_file() and file_path.suffix.lower() in data_extensions:
+                    valid_files.append(file_path)
+            
+            if valid_files:
+                labels = list(set([f.stem for f in valid_files]))  # 使用文件名作为标签
+                self.label_names = sorted(labels)
+            else:
+                self.label_names = []
         else:
             self.label_names = sorted([d.name for d in class_dirs])
         
@@ -213,6 +241,10 @@ class WaveformDataset(Dataset):
         
         # 加载数据
         self._load_data()
+        
+        # 检查是否加载了任何样本
+        if len(self.samples) == 0:
+            raise ValueError(f"未找到有效的数据文件。支持的格式: {data_extensions}")
         
         # 如果没有传入scaler，则创建一个新的
         if self.scaler is None:
@@ -238,24 +270,42 @@ class WaveformDataset(Dataset):
 
     def _load_data(self):
         """加载数据"""
-        # 遍历数据目录中的所有文件
-        for file_path in self.data_dir.glob('*.csv'):
-            self._load_file(file_path, file_path.parent.name)
+        # 只处理有效的数据文件格式
+        data_extensions = {'.csv', '.xlsx', '.xls', '.txt'}
         
-        for file_path in self.data_dir.glob('*.xlsx'):
-            self._load_file(file_path, file_path.parent.name)
-            
-        for file_path in self.data_dir.glob('*.xls'):
-            self._load_file(file_path, file_path.parent.name)
-            
-        for file_path in self.data_dir.glob('*.txt'):
-            self._load_file(file_path, file_path.parent.name)
+        # 检查是否有子目录结构 - 只检查真正的目录（排除隐藏目录等）
+        subdirs = [d for d in self.data_dir.iterdir() if d.is_dir() and not d.name.startswith('.')]
+        has_subdirs = len(subdirs) > 0
+        print(f"Debug: has_subdirs = {has_subdirs}")
+        print(f"Debug: data_dir = {self.data_dir}")
+        print(f"Debug: label_names = {self.label_names}")
+        print(f"Debug: subdirs found = {[d.name for d in subdirs]}")
         
-        # 如果没有子目录结构，直接使用文件名作为标签
-        if not self.samples:
-            for file_path in self.data_dir.glob('*'):
-                if file_path.suffix in ['.csv', '.xlsx', '.xls', '.txt']:
+        if has_subdirs:
+            # 有子目录结构，按子目录分类
+            print("Debug: Loading with subdirectory structure")
+            for file_path in self.data_dir.glob('**/*.csv'):
+                print(f"Debug: Loading CSV file: {file_path}")
+                self._load_file(file_path, file_path.parent.name)
+            
+            for file_path in self.data_dir.glob('**/*.xlsx'):
+                print(f"Debug: Loading XLSX file: {file_path}")
+                self._load_file(file_path, file_path.parent.name)
+                
+            for file_path in self.data_dir.glob('**/*.xls'):
+                print(f"Debug: Loading XLS file: {file_path}")
+                self._load_file(file_path, file_path.parent.name)
+                
+            for file_path in self.data_dir.glob('**/*.txt'):
+                print(f"Debug: Loading TXT file: {file_path}")
+                self._load_file(file_path, file_path.parent.name)
+        else:
+            # 没有子目录结构，直接使用文件名作为标签
+            print("Debug: Loading without subdirectory structure")
+            for file_path in self.data_dir.iterdir():
+                if file_path.is_file() and file_path.suffix.lower() in data_extensions:
                     label = file_path.stem  # 使用文件名作为标签
+                    print(f"Debug: Loading file: {file_path} with label: {label}")
                     self._load_file(file_path, label)
 
     def _load_file(self, file_path, label):
@@ -263,9 +313,11 @@ class WaveformDataset(Dataset):
         try:
             # 根据文件扩展名选择读取方法
             file_extension = file_path.suffix.lower()
+            print(f"Debug _load_file: Processing file {file_path} with extension {file_extension}")
             
             if file_extension == '.csv':
                 df = pd.read_csv(file_path)
+                print(f"Debug _load_file: CSV loaded, shape: {df.shape}, columns: {df.columns.tolist()}")
             elif file_extension == '.xlsx':
                 df = pd.read_excel(file_path, engine='openpyxl')
             elif file_extension == '.xls':
@@ -273,33 +325,53 @@ class WaveformDataset(Dataset):
             elif file_extension == '.txt':
                 df = pd.read_csv(file_path, sep='\\s+')  # 空格分隔
             else:
-                raise ValueError(f"不支持的文件格式: {file_extension}")
+                print(f"跳过不支持的文件格式: {file_path}")
+                return  # 跳过不支持的文件格式
+            
+            # 检查DataFrame是否为空
+            if df.empty:
+                print(f"跳过空文件: {file_path}")
+                return
+            
+            print(f"Debug _load_file: DataFrame info - rows: {len(df)}, cols: {len(df.columns)}")
             
             # 智能识别数据列
             target_col = find_data_column(df)
+            print(f"Debug _load_file: Found target column: {target_col}")
             current = df[target_col].values.astype(float)
+            print(f"Debug _load_file: Data values shape: {current.shape}")
             
             # 信号预处理
             processed_data = preprocess_signal(current)
+            print(f"Debug _load_file: Processed data shape: {processed_data.shape}")
             
             # 长度归一化
             normalized_data = signal.resample(processed_data, TARGET_LENGTH)
+            print(f"Debug _load_file: Normalized data shape: {normalized_data.shape}")
             
             # 特征工程
             features = _add_enhanced_features(normalized_data)
+            print(f"Debug _load_file: Features shape: {features.shape}")
             
             # 添加到样本列表
             self.samples.append(features)
-            self.labels.append(self.label_to_idx[label])
+            self.labels.append(label)
+            print(f"Debug _load_file: Successfully added sample for label {label}")
+            
         except Exception as e:
-            print(f"读取 {file_path} 失败：{e}")
+            print(f"加载文件 {file_path} 时出错: {str(e)}，跳过该文件")
+            import traceback
+            traceback.print_exc()
+            return
 
     def __len__(self):
         return len(self.samples)
     
     def __getitem__(self, idx):
         x = torch.FloatTensor(self.samples[idx])  # shape: (seq_len, features)
-        y = torch.LongTensor([self.labels[idx]])   # 保持为二维张量 [1]
+        label_str = self.labels[idx]
+        label_idx = self.label_to_idx[label_str]
+        y = torch.LongTensor([label_idx])   # 保持为二维张量 [1]
         return x, y.squeeze()                      # squeeze后变为标量
 
 

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏥 膝关节康复波形分类系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="top-nav">
+            <div class="logo">
+                <h1>🏥 膝关节康复波形分类系统</h1>
+            </div>
+            <div class="user-info">
+                <span class="username">研究员</span>
+                <div class="avatar">研</div>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <nav class="side-nav">
+                <ul>
+                    <li class="active" onclick="switchTab('train')"><i class="fas fa-brain"></i> <span>🧠 模型训练</span></li>
+                    <li onclick="switchTab('predict')"><i class="fas fa-search"></i> <span>🔍 波形预测</span></li>
+                    <li onclick="switchTab('visualize')"><i class="fas fa-chart-line"></i> <span>📊 数据可视化</span></li>
+                    <li onclick="switchTab('split')"><i class="fas fa-cut"></i> <span>✂️ 数据分割</span></li>
+                    <li onclick="switchTab('qtbfs')"><i class="fas fa-heartbeat"></i> <span>❤️ QTBFS康复评分</span></li>
+                    <li onclick="switchTab('analysis')"><i class="fas fa-robot"></i> <span>🤖 AI分析</span></li>
+                </ul>
+
+                <div class="ai-assistant">
+                    <div class="ai-header">
+                        <i class="fas fa-robot"></i>
+                        <h3>AI 助手</h3>
+                    </div>
+                    <p>AI 助手可以帮您分析波形数据，提供专业建议</p>
+                    <button class="ai-button" onclick="toggleAIDialog()">
+                        <i class="fas fa-comments"></i> 咨询 AI 助手
+                    </button>
+                </div>
+            </nav>
+
+            <main class="content">
+                
+                <div id="train-tab" class="tab-content">
+                    <div class="content-header"><h2>🧠 模型训练</h2></div>
+                    <div class="stats-cards">
+                        <div class="stat-card"><h3><i class="fas fa-database"></i> 数据集</h3><div class="stat-value">12</div><div class="stat-label">角度类别</div></div>
+                        <div class="stat-card"><h3><i class="fas fa-file-alt"></i> 样本数量</h3><div class="stat-value alert">1,248</div><div class="stat-label">波形文件</div></div>
+                        <div class="stat-card"><h3><i class="fas fa-tachometer-alt"></i> 模型性能</h3><div class="stat-value warning">94.2%</div><div class="stat-label">准确率</div></div>
+                        <div class="stat-card"><h3><i class="fas fa-clock"></i> 训练时长</h3><div class="stat-value success">2.5h</div><div class="stat-label">平均耗时</div></div>
+                    </div>
+                    
+                    <div class="ai-insights">
+                        <div class="ai-insights-header"><i class="fas fa-lightbulb"></i><h3>AI 分析见解</h3></div>
+                        <div class="ai-content">
+                            <p><strong>数据质量评估:</strong> 当前数据集质量良好，建议增加30-60°角度范围的样本。</p>
+                            <p><strong>训练建议:</strong> 推荐训练轮数设置为60-80轮以获得最佳性能。</p>
+                        </div>
+                        <button class="ai-details-btn">查看详细分析</button>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> 训练配置</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>📂 数据目录 (ZIP压缩包)</label>
+                                <div class="file-upload-area" onclick="document.getElementById('datasetFileInput').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>点击选择ZIP数据集</p>
+                                    <input type="file" id="datasetFileInput" style="display: none;" accept=".zip" onchange="handleDatasetSelect(event)">
+                                </div>
+                                <div id="datasetFileInfo" class="file-info" style="display: none;">已选择: <span id="datasetFileName"></span></div>
+                            </div>
+                            <div class="form-group"><label for="modelPath">💾 模型保存路径</label><input type="text" id="modelPath" class="form-control" value="waveform_model.pth"></div>
+                            <div class="form-group"><label for="epochs">🔄 训练轮数</label><input type="number" id="epochs" class="form-control" value="50"></div>
+                            <div class="form-group"><label for="batchSize">📦 批处理大小</label><input type="number" id="batchSize" class="form-control" value="64"></div>
+                        </div>
+                        <button class="btn btn-primary" onclick="startTraining()" style="margin-top: 20px;"><i class="fas fa-rocket"></i> 开始训练</button>
+                    </div>
+
+                    <div class="results-section">
+                        <h3><i class="fas fa-chart-line"></i> 训练进度</h3>
+                        <div class="training-progress">
+                            <div class="progress-bar-container"><div class="progress-bar" id="trainingProgressBar" style="width: 0%;"></div></div>
+                            <div class="progress-text" id="progressText">等待开始训练...</div>
+                        </div>
+                        <div class="training-charts">
+                            <div class="chart-box"><div class="chart-title">训练损失曲线</div><div class="chart-container"><canvas id="lossChart"></canvas></div></div>
+                            <div class="chart-box"><div class="chart-title">准确率曲线</div><div class="chart-container"><canvas id="accuracyChart"></canvas></div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3><i class="fas fa-clipboard-list"></i> 训练日志</h3>
+                        <div id="trainingLog" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; height: 200px; overflow-y: auto; font-family: monospace;">等待开始...</div>
+                    </div>
+                </div>
+
+                <div id="predict-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>🔍 波形预测</h2></div>
+                    <div class="form-section">
+                        <h3><i class="fas fa-sliders-h"></i> 预测配置</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>🤖 模型文件</label>
+                                <div class="file-upload-area" onclick="document.getElementById('modelFileInput').click()">
+                                    <i class="fas fa-microchip"></i><p>选择模型文件 (.pth)</p>
+                                    <input type="file" id="modelFileInput" style="display: none;" accept=".pth" onchange="handleModelSelect(event)">
+                                </div>
+                                <div id="modelFileInfo" class="file-info" style="display: none;"><span>已选择: <span id="modelFileName"></span></span></div>
+                            </div>
+                            <div class="form-group">
+                                <label>📄 数据文件</label>
+                                <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i><p>选择数据文件 (CSV/Excel)</p>
+                                    <input type="file" id="fileInput" style="display: none;" accept=".csv,.xlsx,.xls,.txt" onchange="handleFileSelect(event)">
+                                </div>
+                                <div id="fileInfo" class="file-info" style="display: none;"><span>已选择: <span id="fileName"></span></span></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="startPrediction()" style="margin-top: 20px;"><i class="fas fa-bolt"></i> 开始预测</button>
+                    </div>
+                    <div class="results-section">
+                        <h3><i class="fas fa-poll"></i> 预测结果</h3>
+                        <div class="result-card">
+                            <div>主类别: <span class="result-value prediction-result" id="predictionResult">--</span></div>
+                            <div>匹配度: <span class="result-value confidence-result" id="confidenceResult">--</span></div>
+                        </div>
+                        <h3><i class="fas fa-chart-pie"></i> 角度成分分布</h3>
+                        <div class="chart-container"><canvas id="probabilityChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div id="visualize-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>📊 数据可视化</h2></div>
+                    <div class="form-section">
+                        <div class="file-upload-area" onclick="document.getElementById('visFileInput').click()">
+                            <i class="fas fa-chart-line"></i><p>点击选择数据文件进行绘图</p>
+                            <input type="file" id="visFileInput" style="display: none;" accept=".csv,.xlsx,.xls,.txt" onchange="handleVisFileSelect(event)">
+                        </div>
+                        <div id="visFileInfo" class="file-info" style="display: none; margin-top: 1rem;">已选择: <span id="visFileName"></span></div>
+                        <button class="btn btn-primary" onclick="visualizeData()" style="margin-top: 20px;">生成图表</button>
+                    </div>
+                    <div class="results-section">
+                        <h3><i class="fas fa-wave-square"></i> 波形图表</h3>
+                        <div class="chart-container"><canvas id="waveformChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div id="split-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>✂️ 数据分割</h2></div>
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> 数据分割配置</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>📄 上传CSV文件</label>
+                                <div class="file-upload-area" onclick="document.getElementById('splitFileInput').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i><p>选择CSV文件</p>
+                                    <input type="file" id="splitFileInput" style="display: none;" accept=".csv" onchange="handleSplitFileSelect(event)">
+                                </div>
+                                <div id="splitFileInfo" class="file-info" style="display: none; margin-top: 1rem;">已选择: <span id="splitFileName"></span></div>
+                            </div>
+                            <div class="form-group">
+                                <label>🔢 分割段数</label>
+                                <input type="number" id="segmentCount" class="form-control" value="1" min="1">
+                                <button class="btn btn-secondary" onclick="confirmSegmentCount()" style="margin-top: 10px;">确认段数</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h3><i class="fas fa-wave-square"></i> 波形预览</h3>
+                        <div class="chart-container"><canvas id="splitVisualizationChart"></canvas></div>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <select id="xAxisColumn" class="form-control" onchange="updateSplitVisualization()">
+                                <option value="0">第1列</option><option value="1" selected>第2列 (Time)</option><option value="2">第3列</option>
+                            </select>
+                            <select id="yAxisColumn" class="form-control" onchange="updateSplitVisualization()">
+                                <option value="0">第1列</option><option value="1">第2列</option><option value="2" selected>第3列 (Value)</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="loadSplitVisualizationData()">更新图表</button>
+                        </div>
+                    </div>
+                    <div class="form-section" id="splitParamsSection" style="display: none;">
+                        <h3>分割参数</h3>
+                        <div class="table-container">
+                            <table class="param-table">
+                                <thead><tr><th>段号</th><th>起始点(X)</th><th>结束点(X)</th><th>段名称</th></tr></thead>
+                                <tbody id="splitParamsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-secondary" onclick="previewSplit()" style="margin-top: 15px;">预览分割</button>
+                        <button class="btn btn-primary" onclick="executeSplit()" style="margin-top: 15px;">执行并下载</button>
+                    </div>
+                </div>
+
+                <div id="qtbfs-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>❤️ QTBFS康复评分系统</h2></div>
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> 评分配置</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>📁 状态0参考文件组 (可选)</label>
+                                <div class="file-upload-area" onclick="document.getElementById('state0FolderInput').click()">
+                                    <i class="fas fa-folder-open"></i><p>选择包含参考文件的文件</p>
+                                    <input type="file" id="state0FolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleState0Select(event)">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>📁 当前状态文件</label>
+                                <div class="file-upload-area" onclick="document.getElementById('currentFolderInput').click()">
+                                    <i class="fas fa-folder-open"></i><p>选择当前状态文件</p>
+                                    <input type="file" id="currentFolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleCurrentSelect(event)">
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="calculateQTBFSScore()" style="margin-top: 20px;">计算评分</button>
+                    </div>
+                    <div class="results-section" id="qtbfsResults">
+                        <div style="text-align: center; color: #666;"><p>请上传数据并计算</p></div>
+                    </div>
+                </div>
+
+                <div id="analysis-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>🤖 AI智能分析</h2></div>
+                    <div class="results-section">
+                        <h3><i class="fas fa-file-medical-alt"></i> AI分析报告</h3>
+                        <div id="aiReportContent"><div style="text-align: center; color: #666;"><p>请先进行波形预测</p></div></div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <div class="ai-dialog" id="aiDialog">
+        <div class="ai-dialog-header"><h3><i class="fas fa-robot"></i> AI 助手</h3><button class="close-btn" onclick="toggleAIDialog()">×</button></div>
+        <div class="ai-dialog-content" id="aiDialogContent">
+            <div class="ai-message"><div class="ai-avatar">AI</div><div class="message">您好！我是您的AI助手。</div></div>
+        </div>
+        <div class="ai-dialog-input">
+            <input type="text" placeholder="输入您的问题..." id="aiQuestionInput">
+            <button class="send-btn" onclick="askAI()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
