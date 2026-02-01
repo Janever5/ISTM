@@ -157,45 +157,68 @@
                     <div class="content-header"><h2>✂️ 数据分割</h2></div>
                     <div class="form-section">
                         <h3><i class="fas fa-cog"></i> 数据分割配置</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>📄 上传CSV文件</label>
-                                <div class="file-upload-area" onclick="document.getElementById('splitFileInput').click()">
-                                    <i class="fas fa-cloud-upload-alt"></i><p>选择CSV文件</p>
-                                    <input type="file" id="splitFileInput" style="display: none;" accept=".csv" onchange="handleSplitFileSelect(event)">
-                                </div>
-                                <div id="splitFileInfo" class="file-info" style="display: none; margin-top: 1rem;">已选择: <span id="splitFileName"></span></div>
+                        <div class="form-group">
+                            <label>📄 上传CSV/Excel文件</label>
+                            <div class.ame="file-upload-area" onclick="document.getElementById('splitFileInput').click()">
+                                <i class="fas fa-cloud-upload-alt"></i><p>选择文件</p>
+                                <input type="file" id="splitFileInput" style="display: none;" accept=".csv,.xlsx,.xls" onchange="handleSplitFileSelect(event)">
                             </div>
+                            <div id="splitFileInfo" class="file-info" style="display: none; margin-top: 1rem;">已选择: <span id="splitFileName"></span></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>模式选择</label>
+                            <div class="radio-group">
+                                <input type="radio" id="splitModeManual" name="splitMode" value="manual" checked onchange="toggleSplitMode()">
+                                <label for="splitModeManual">手动分割</label>
+                                <input type="radio" id="splitModeEqual" name="splitMode" value="equal" onchange="toggleSplitMode()">
+                                <label for="splitModeEqual">等分模式</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="split-manual-section">
+                        <div class="form-section">
                             <div class="form-group">
-                                <label>🔢 分割段数</label>
+                                <label for="segmentCount">🔢 手动分割段数</label>
                                 <input type="number" id="segmentCount" class="form-control" value="1" min="1">
                                 <button class="btn btn-secondary" onclick="confirmSegmentCount()" style="margin-top: 10px;">确认段数</button>
                             </div>
                         </div>
+                        <div class="form-section" id="splitParamsSection" style="display: none;">
+                            <h3><i class="fas fa-tasks"></i> 分割参数</h3>
+                            <div class="table-container">
+                                <table class="param-table">
+                                    <thead><tr><th>段号</th><th>起始点(X)</th><th>结束点(X)</th><th>段名称</th></tr></thead>
+                                    <tbody id="splitParamsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
+
+                    <div id="split-equal-section" style="display: none;">
+                        <div class="form-section">
+                            <h3><i class="fas fa-equals"></i> 等分模式配置</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="numSegments">🔢 分割段数</label>
+                                    <input type="number" id="numSegments" class="form-control" value="5" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="namePrefix">🏷️ 文件名前缀</label>
+                                    <input type="text" id="namePrefix" class="form-control" value="segment">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-section">
                         <h3><i class="fas fa-wave-square"></i> 波形预览</h3>
                         <div class="chart-container"><canvas id="splitVisualizationChart"></canvas></div>
-                        <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <select id="xAxisColumn" class="form-control" onchange="updateSplitVisualization()">
-                                <option value="0">第1列</option><option value="1" selected>第2列 (Time)</option><option value="2">第3列</option>
-                            </select>
-                            <select id="yAxisColumn" class="form-control" onchange="updateSplitVisualization()">
-                                <option value="0">第1列</option><option value="1">第2列</option><option value="2" selected>第3列 (Value)</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="loadSplitVisualizationData()">更新图表</button>
-                        </div>
                     </div>
-                    <div class="form-section" id="splitParamsSection" style="display: none;">
-                        <h3>分割参数</h3>
-                        <div class="table-container">
-                            <table class="param-table">
-                                <thead><tr><th>段号</th><th>起始点(X)</th><th>结束点(X)</th><th>段名称</th></tr></thead>
-                                <tbody id="splitParamsTableBody"></tbody>
-                            </table>
-                        </div>
-                        <button class="btn btn-secondary" onclick="previewSplit()" style="margin-top: 15px;">预览分割</button>
-                        <button class="btn btn-primary" onclick="executeSplit()" style="margin-top: 15px;">执行并下载</button>
+
+                    <div class="form-section">
+                         <button class="btn btn-primary" onclick="executeSplit()">执行并下载</button>
                     </div>
                 </div>
 
@@ -205,24 +228,47 @@
                         <h3><i class="fas fa-cog"></i> 评分配置</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>📁 状态0参考文件组 (可选)</label>
+                                <label>📁 状态0参考文件组 (健康对照组)</label>
                                 <div class="file-upload-area" onclick="document.getElementById('state0FolderInput').click()">
-                                    <i class="fas fa-folder-open"></i><p>选择包含参考文件的文件</p>
-                                    <input type="file" id="state0FolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleState0Select(event)">
+                                    <i class="fas fa-folder-open"></i><p>选择参考文件(可多选)</p>
+                                    <input type="file" id="state0FolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleQtbfsFileUpload('state0', event)">
                                 </div>
+                                <div id="state0FileList" class="file-list-display"></div>
                             </div>
                             <div class="form-group">
-                                <label>📁 当前状态文件</label>
+                                <label>📁 当前状态文件 (待评估组)</label>
                                 <div class="file-upload-area" onclick="document.getElementById('currentFolderInput').click()">
-                                    <i class="fas fa-folder-open"></i><p>选择当前状态文件</p>
-                                    <input type="file" id="currentFolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleCurrentSelect(event)">
+                                    <i class="fas fa-folder-open"></i><p>选择当前文件(可多选)</p>
+                                    <input type="file" id="currentFolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleQtbfsFileUpload('current', event)">
                                 </div>
+                                <div id="currentFileList" class="file-list-display"></div>
                             </div>
                         </div>
+                        <div class="form-section" style="margin-top:20px;">
+                           <h3><i class="fas fa-chart-line"></i> 上传波形预览</h3>
+                           <div class="chart-grid">
+                               <div id="state0ChartContainer" class="chart-container-grid">
+                                   <h4>状态0 波形</h4>
+                                   <canvas id="state0WaveformChart"></canvas>
+                                   <div class="placeholder" id="state0Placeholder">上传文件后将在此处显示波形图</div>
+                               </div>
+                               <div id="currentChartContainer" class="chart-container-grid">
+                                   <h4>当前状态 波形</h4>
+                                   <canvas id="currentWaveformChart"></canvas>
+                                   <div class="placeholder" id="currentPlaceholder">上传文件后将在此处显示波形图</div>
+                               </div>
+                           </div>
+                       </div>
                         <button class="btn btn-primary" onclick="calculateQTBFSScore()" style="margin-top: 20px;">计算评分</button>
                     </div>
-                    <div class="results-section" id="qtbfsResults">
+                    <div id="qtbfsResults" class="results-section" style="display: none;">
                         <div style="text-align: center; color: #666;"><p>请上传数据并计算</p></div>
+                    </div>
+                    <div id="qtbfsRadarContainer" class="results-section" style="display: none;">
+                        <h3><i class="fas fa-compass"></i> 综合能力雷达图</h3>
+                        <div class="chart-container" style="max-width: 500px; margin: auto;">
+                            <canvas id="qtbfsRadarChart"></canvas>
+                        </div>
                     </div>
                 </div>
 

@@ -473,21 +473,17 @@ function visualizeData() {
 }
 
 // ------------------ 数据分割 ------------------
-function handleSplitFileDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.target.closest('.file-upload-area').classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleSplitFiles(e.dataTransfer.files);
-}
-
 function handleSplitFileSelect(e) {
     if (e.target.files.length) handleSplitFiles(e.target.files);
 }
 
 function handleSplitFiles(files) {
     const file = files[0];
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-        showNotification('请上传CSV格式的文件', 'error');
+    const validExtensions = ['.csv', '.xlsx', '.xls'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+    if (!validExtensions.includes(fileExtension)) {
+        showNotification('请上传CSV或Excel格式的文件', 'error');
         return;
     }
     selectedSplitFile = file;
@@ -513,8 +509,8 @@ function loadSplitVisualizationData() {
         if (data.success) {
             const visualizationData = {
                 file_path: data.path,
-                x_axis_column: parseInt(document.getElementById('xAxisColumn').value) || 1,
-                y_axis_column: parseInt(document.getElementById('yAxisColumn').value) || 2
+                x_axis_column: 1, // time
+                y_axis_column: 2  // resistance
             };
 
             fetch('/api/visualize_split_data', {
@@ -535,7 +531,7 @@ function loadSplitVisualizationData() {
             showNotification(`上传文件失败: ${data.error}`, 'error');
         }
     })
-    .catch(error => showNotification('上传文件时出错', 'error'));
+    .catch(error => showNotification(`上传文件时出错: ${error.message}`, 'error'));
 }
 
 // 渲染分割图表
@@ -570,10 +566,6 @@ function renderVisualizationChart(labels, data, xAxisLabel, yAxisLabel) {
     });
 }
 
-// 更新分割图表（下拉框回调）
-function updateSplitVisualization() {
-    loadSplitVisualizationData();
-}
 
 // 分割配置
 function confirmSegmentCount() {
@@ -622,176 +614,168 @@ function previewSplit() {
 }
 
 function executeSplit() {
-    if (!selectedSplitFile) return showNotification('请先选择文件', 'error');
-    
-    const segmentCount = parseInt(document.getElementById('segmentCount').value);
-    const params = [];
-    for (let i = 0; i < segmentCount; i++) {
-        const start = parseFloat(document.getElementById(`start_${i}`).value);
-        const end = parseFloat(document.getElementById(`end_${i}`).value);
-        const name = document.getElementById(`name_${i}`).value.trim();
-        params.push({ start, end, name });
+    if (!selectedSplitFile) {
+        return showNotification('请先选择要分割的文件', 'error');
     }
-    
+
     const formData = new FormData();
     formData.append('file', selectedSplitFile);
-    formData.append('params', JSON.stringify(params));
-    
-    fetch('/api/split_signal', { method: 'POST', body: formData })
+
+    const mode = document.querySelector('input[name="splitMode"]:checked').value;
+    formData.append('split_mode', mode);
+
+    if (mode === 'equal') {
+        const numSegments = document.getElementById('numSegments').value;
+        const namePrefix = document.getElementById('namePrefix').value;
+        if (!numSegments || parseInt(numSegments) <= 0) {
+            return showNotification('等分模式下，分割段数必须为正整数', 'error');
+        }
+        if (!namePrefix) {
+            return showNotification('等分模式下，文件名前缀不能为空', 'error');
+        }
+        formData.append('num_segments', numSegments);
+        formData.append('name_prefix', namePrefix);
+    } else { // manual mode
+        const segmentCount = parseInt(document.getElementById('segmentCount').value);
+        if (isNaN(segmentCount) || segmentCount <= 0) {
+            return showNotification('手动模式下，请先确认有效的分割段数', 'error');
+        }
+        const params = [];
+        for (let i = 0; i < segmentCount; i++) {
+            const start = parseFloat(document.getElementById(`start_${i}`).value);
+            const end = parseFloat(document.getElementById(`end_${i}`).value);
+            const name = document.getElementById(`name_${i}`).value.trim();
+            if (isNaN(start) || isNaN(end) || !name) {
+                return showNotification(`请检查手动分割第 ${i + 1} 行的参数`, 'error');
+            }
+            if (start >= end) {
+                return showNotification(`第 ${i + 1} 行的起始点必须小于结束点`, 'error');
+            }
+            params.push({ start, end, name });
+        }
+        formData.append('params', JSON.stringify(params));
+    }
+
+    showNotification('正在执行分割...', 'info');
+
+    fetch('/api/split_signal', {
+        method: 'POST',
+        body: formData
+    })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            showNotification(`分割完成！生成了${data.file_count || '多'}个文件，准备下载`, 'success');
+            showNotification(`分割完成！生成了 ${data.file_count} 个文件，准备下载...`, 'success');
             if (data.download_url) {
+                // 创建一个隐藏的a标签来触发下载
                 const link = document.createElement('a');
                 link.href = data.download_url;
-                link.download = '';
+                // 从URL中提取文件名
+                link.download = data.download_url.split('/').pop();
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
             }
         } else {
             showNotification(`分割失败: ${data.error}`, 'error');
         }
+    })
+    .catch(error => {
+        showNotification(`执行分割时出错: ${error.message}`, 'error');
     });
 }
 
 // ------------------ QTBFS 评分 ------------------
-function handleState0Drop(e) {
-    e.preventDefault(); e.stopPropagation();
-    e.target.closest('.file-upload-area').classList.remove('dragover');
-    if (e.dataTransfer.items) {
-        state0Files = Array.from(e.dataTransfer.items).filter(i => i.kind === 'file').map(i => i.getAsFile());
-        showNotification(`已选择${state0Files.length}个状态0参考文件`, 'info');
+let state0WaveformChart = null;
+let currentWaveformChart = null;
+let qtbfsRadarChart = null;
+
+function handleQtbfsFileUpload(type, event) {
+    const fileInput = event.target;
+    const files = fileInput.files;
+    if (files.length === 0) return;
+
+    // 更新全局文件列表
+    if (type === 'state0') {
+        state0Files = Array.from(files);
+    } else {
+        currentFiles = Array.from(files);
     }
-}
-function handleState0Select(e) {
-    state0Files = Array.from(e.target.files);
-    showNotification(`已选择${state0Files.length}个状态0参考文件`, 'info');
-}
-function handleCurrentDrop(e) {
-    e.preventDefault(); e.stopPropagation();
-    e.target.closest('.file-upload-area').classList.remove('dragover');
-    if (e.dataTransfer.items) {
-        currentFiles = Array.from(e.dataTransfer.items).filter(i => i.kind === 'file').map(i => i.getAsFile());
-        showNotification(`已选择${currentFiles.length}个当前状态文件`, 'info');
+
+    // 更新界面上的文件列表显示
+    const fileListDiv = document.getElementById(type === 'state0' ? 'state0FileList' : 'currentFileList');
+    fileListDiv.innerHTML = '';
+    for (const file of files) {
+        const fileElement = document.createElement('div');
+        fileElement.className = 'file-item';
+        fileElement.textContent = file.name;
+        fileListDiv.appendChild(fileElement);
     }
-}
-function handleCurrentSelect(e) {
-    currentFiles = Array.from(e.target.files);
-    showNotification(`已选择${currentFiles.length}个当前状态文件`, 'info');
+
+    // 预览最后一个上传的文件
+    const lastFile = files[files.length - 1];
+    previewQtbfsWaveform(lastFile, type);
+    showNotification(`已选择 ${files.length} 个${type === 'state0' ? '参考' : '当前'}文件`, 'info');
 }
 
-function calculateQTBFSScore() {
-    if (currentFiles.length === 0) return showNotification('请上传当前状态文件', 'error');
-    
+function previewQtbfsWaveform(file, type) {
     const formData = new FormData();
-    // 修正Key名：不带索引下标，直接使用列表
-    currentFiles.forEach(file => formData.append('current_files', file));
-    state0Files.forEach(file => formData.append('state0_files', file));
-    
-    fetch('/api/qtbfs_calculate', { method: 'POST', body: formData })
-    .then(async response => {
-        // 先检查响应状态，如果是 500 或 404，手动抛出文本错误
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`服务器错误 (${response.status}): ${errorText.substring(0, 100)}...`);
-        }
-        return response.json();
+    formData.append('file', file);
+
+    showNotification(`正在生成 ${file.name} 的波形预览...`, 'info');
+
+    fetch('/api/preview_waveform', {
+        method: 'POST',
+        body: formData
     })
-    .then(res => {
-        if (res.success) {
-            // 保存可视化数据到全局变量
-            qtbfsVisualData = res.result.visualizations;
-            displayQTBFSResult(res.result);
-            showNotification('评分计算完成', 'success');
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            renderQtbfsWaveformChart(result.data, type, file.name);
+            showNotification('波形预览生成成功', 'success');
         } else {
-            showNotification(`评分计算失败: ${res.error}`, 'error');
+            showNotification(`预览失败: ${result.error}`, 'error');
         }
     })
     .catch(error => {
-        console.error('计算QTBFS评分时出错:', error);
-        // 现在这里会显示真正的服务器错误原因，而不是 JSON 解析错误
-        showNotification(`请求失败: ${error.message}`, 'error');
+        showNotification(`预览请求失败: ${error.message}`, 'error');
     });
 }
 
-function displayQTBFSResult(res) {
-    const div = document.getElementById('qtbfsResults');
+function renderQtbfsWaveformChart(chartData, type, fileName) {
+    const canvasId = type === 'state0' ? 'state0WaveformChart' : 'currentWaveformChart';
+    const placeholderId = type === 'state0' ? 'state0Placeholder' : 'currentPlaceholder';
+    const chartVar = type === 'state0' ? 'state0WaveformChart' : 'currentWaveformChart';
+
+    const ctx = document.getElementById(canvasId).getContext('2d');
     
-    // 构造下拉菜单选项
-    let options = '<option value="">-- 选择文件查看波形对比 --</option>';
-    if (qtbfsVisualData) {
-        if(qtbfsVisualData.state0) {
-            Object.keys(qtbfsVisualData.state0).forEach(k => {
-                options += `<option value="state0:${k}">状态0: ${k}</option>`;
-            });
-        }
-        if(qtbfsVisualData.current) {
-            Object.keys(qtbfsVisualData.current).forEach(k => {
-                options += `<option value="current:${k}">当前状态: ${k}</option>`;
-            });
-        }
+    // 销毁旧图表
+    if (window[chartVar]) {
+        window[chartVar].destroy();
     }
 
-    div.innerHTML = `
-        <div class="result-card">
-            <h3>QTBFS总分: ${res.total_score}</h3>
-            <p class="stat-value" style="color:${res.total_score>85?'#2ecc71':'#f1c40f'}">${res.stage}</p>
-            <div style="text-align:left; margin-top:20px;">
-                <p>域I (力学): ${res.domain_I.total}/40</p>
-                <p>域II (动态): ${res.domain_II.total}/35</p>
-                <p>域III (储备): ${res.domain_III.total}/25</p>
-            </div>
-        </div>
-        
-        <div class="form-section" style="margin-top:20px;">
-            <h3><i class="fas fa-wave-square"></i> 信号处理前后对比</h3>
-            <div style="margin-bottom: 15px;">
-                <select id="qtbfsFileSelect" class="form-control" onchange="updateQtbfsChart(this.value)">
-                    ${options}
-                </select>
-            </div>
-            <div class="chart-container">
-                <canvas id="qtbfsChart"></canvas>
-            </div>
-        </div>
-    `;
-    
-    // 初始化空图表
-    updateQtbfsChart("");
-}
+    // 隐藏占位符
+    document.getElementById(placeholderId).style.display = 'none';
 
-function updateQtbfsChart(selection) {
-    if(!selection) {
-        // 如果没有选择或初始化，清空图表
-        if(qtbfsChart) qtbfsChart.destroy();
-        return;
-    }
-
-    const [type, key] = selection.split(':');
-    const dataObj = qtbfsVisualData[type][key];
-    
-    if(!dataObj) return;
-
-    const ctx = document.getElementById('qtbfsChart').getContext('2d');
-    if (qtbfsChart) qtbfsChart.destroy();
-
-    qtbfsChart = new Chart(ctx, {
+    window[chartVar] = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: dataObj.labels || Array.from({length: dataObj.raw.length}, (_, i) => i),
+            labels: chartData.labels || Array.from({length: chartData.raw.length}, (_, i) => i),
             datasets: [
                 {
-                    label: '原始数据 (去均值)',
-                    data: dataObj.raw,
-                    borderColor: '#95a5a6', // 灰色
-                    borderWidth: 1,
+                    label: '原始信号',
+                    data: chartData.raw,
+                    borderColor: '#bdc3c7', // 灰色
+                    borderWidth: 1.5,
                     pointRadius: 0,
                     tension: 0.1
                 },
                 {
-                    label: '最终处理数据 (去趋势+归零)',
-                    data: dataObj.processed,
+                    label: '处理后信号 (基线校正)',
+                    data: chartData.processed,
                     borderColor: '#2ecc71', // 绿色
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    fill: true,
                     borderWidth: 2,
                     pointRadius: 0,
                     tension: 0.1
@@ -801,17 +785,128 @@ function updateQtbfsChart(selection) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
             plugins: {
-                title: { display: true, text: `文件: ${key} 处理效果对比` },
+                title: { display: true, text: fileName },
+                legend: { position: 'bottom' },
                 zoom: {
                     zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
                     pan: { enabled: true, mode: 'x' }
                 }
+            },
+            scales: {
+                x: { title: { display: true, text: '时间 (s)' } },
+                y: { title: { display: true, text: '电阻 (Ω)' } }
             }
         }
     });
 }
+
+
+function calculateQTBFSScore() {
+    if (currentFiles.length === 0) return showNotification('请上传当前状态文件', 'error');
+    if (state0Files.length === 0) return showNotification('请上传状态0参考文件', 'error');
+    
+    const formData = new FormData();
+    currentFiles.forEach(file => formData.append('current_files', file));
+    state0Files.forEach(file => formData.append('state0_files', file));
+    
+    showNotification('正在计算QTBFS评分...', 'info');
+
+    fetch('/api/qtbfs_calculate', { method: 'POST', body: formData })
+    .then(async response => {
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`服务器错误 (${response.status}): ${errorText.substring(0, 200)}...`);
+        }
+        return response.json();
+    })
+    .then(res => {
+        if (res.success) {
+            displayQTBFSResult(res.result);
+            showNotification('评分计算完成', 'success');
+        } else {
+            showNotification(`评分计算失败: ${res.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('计算QTBFS评分时出错:', error);
+        showNotification(`请求失败: ${error.message}`, 'error');
+    });
+}
+
+function displayQTBFSResult(res) {
+    const resultsDiv = document.getElementById('qtbfsResults');
+    const radarDiv = document.getElementById('qtbfsRadarContainer');
+    
+    resultsDiv.style.display = 'block';
+    radarDiv.style.display = 'block';
+
+    const scoreColor = res.total_score > 85 ? '#2ecc71' : (res.total_score > 50 ? '#f1c40f' : '#e74c3c');
+    
+    resultsDiv.innerHTML = `
+        <h3><i class="fas fa-poll-h"></i> 评分概览</h3>
+        <div class="result-grid">
+            <div class="result-card main-score">
+                <div class="score-circle" style="--score-color:${scoreColor};">
+                    ${res.total_score}
+                </div>
+                <p class="stage-text">${res.stage}</p>
+            </div>
+            <div class="result-card">
+                <h4>域I: 力学承载能力</h4>
+                <div class="domain-score">${res.domain_I.total.toFixed(1)} / 40</div>
+            </div>
+            <div class="result-card">
+                <h4>域II: 动态适应能力</h4>
+                <div class="domain-score">${res.domain_II.total.toFixed(1)} / 35</div>
+            </div>
+            <div class="result-card">
+                <h4>域III: 功能储备能力</h4>
+                <div class="domain-score">${res.domain_III.total.toFixed(1)} / 25</div>
+            </div>
+        </div>
+    `;
+    
+    renderQtbfsRadarChart(res.domain_I.total, res.domain_II.total, res.domain_III.total);
+}
+
+function renderQtbfsRadarChart(d1, d2, d3) {
+    const ctx = document.getElementById('qtbfsRadarChart').getContext('2d');
+    if (qtbfsRadarChart) {
+        qtbfsRadarChart.destroy();
+    }
+    qtbfsRadarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['域I:力学承载 (40)', '域II:动态适应 (35)', '域III:功能储备 (25)'],
+            datasets: [{
+                label: '康复得分',
+                data: [d1, d2, d3],
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: 'rgb(52, 152, 219)',
+                pointBackgroundColor: 'rgb(52, 152, 219)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb(52, 152, 219)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { display: true },
+                    suggestedMin: 0,
+                    suggestedMax: 30 
+                }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
 
 // ------------------ AI 报告 ------------------
 function generateAIReport(predictedClass, confidence, probabilities) {

@@ -525,53 +525,83 @@ def api_visualize_split_data():
 
 @app.route('/api/split_signal', methods=['POST'])
 def split_signal():
-    """信号数据分割API，支持ZIP下载，现在支持直接上传文件进行分割"""
+    """信号数据分割API，支持ZIP下载，支持手动分割和自动等分模式"""
+    temp_file_path = None
+    is_temp_file = False
     try:
-        # 检查是否有文件上传（multipart/form-data请求）
-        if 'file' in request.files:
-            # 直接上传文件进行分割
+        def get_time_range(file_path_local):
+            """辅助函数：从文件中读取时间范围"""
+            if not file_path_local or not os.path.exists(file_path_local):
+                raise FileNotFoundError(f"文件路径不存在: {file_path_local}")
+            
+            file_ext = os.path.splitext(file_path_local)[1].lower()
+            df = None
+            if file_ext == '.csv':
+                encodings = ['utf-8', 'gbk', 'latin1', 'cp1252', 'utf-8-sig']
+                for encoding in encodings:
+                    try:
+                        df = pd.read_csv(file_path_local, encoding=encoding); break
+                    except Exception: continue
+                if df is None: raise ValueError('无法读取CSV文件')
+            elif file_ext in ['.xlsx', '.xls']:
+                df = pd.read_excel(file_path_local)
+            else: raise ValueError(f'不支持的文件格式: {file_ext}')
+            if len(df.columns) < 2: raise ValueError('文件需要至少2列')
+            time_col = pd.to_numeric(df.iloc[:, 1], errors='coerce').dropna()
+            if time_col.empty: raise ValueError('时间列无有效数据')
+            return time_col.min(), time_col.max()
+
+        params = None
+        
+        # 统一处理输入，无论是form-data还是json
+        if 'file' in request.files: # 来自表单上传
             file = request.files['file']
             if file.filename == '':
                 return jsonify({'success': False, 'error': '没有选择文件'})
             
-            # 保存上传的文件到临时位置
             filename = secure_filename(file.filename)
             temp_file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"temp_split_{uuid.uuid4()}_{filename}")
             file.save(temp_file_path)
+            is_temp_file = True # 标记此文件为临时文件，需要删除
             
-            # 获取分割参数
-            params_str = request.form.get('params')
-            if params_str:
-                try:
-                    params = json.loads(params_str)
-                except json.JSONDecodeError:
-                    return jsonify({'success': False, 'error': '分割参数格式错误'})
-            else:
-                return jsonify({'success': False, 'error': '没有提供分割参数'})
-        else:
-            # 检查Content-Type是否为application/json
-            content_type = request.headers.get('Content-Type', '')
-            if 'application/json' in content_type:
-                # 从JSON请求获取数据
-                data = request.get_json()
-                if data is None:
-                    return jsonify({'success': False, 'error': '无效的JSON数据'})
-            else:
-                # 如果不是application/json，尝试从form中获取
-                data_str = request.form.get('data', '{}')
-                if data_str:
-                    try:
-                        data = json.loads(data_str)
-                    except json.JSONDecodeError:
-                        data = {}
-                else:
-                    data = {}
+            source_data = request.form
+        else: # 来自JSON请求
+            source_data = request.get_json()
+            if source_data is None: return jsonify({'success': False, 'error': '无效的JSON数据'})
+            temp_file_path = source_data.get('file_path')
+
+        if not temp_file_path:
+            return jsonify({'success': False, 'error': '没有提供文件路径'})
             
-            temp_file_path = data.get('file_path')
-            params = data.get('params')  # List of {start, end, name}
+        split_mode = source_data.get('split_mode')
         
-        if not temp_file_path or not params:
-            return jsonify({'success': False, 'error': '缺少文件路径或分割参数'})
+        if split_mode == 'equal':
+            try:
+                num_segments = int(source_data.get('num_segments'))
+                name_prefix = source_data.get('name_prefix', 'segment')
+                if num_segments <= 0:
+                    return jsonify({'success': False, 'error': '分割段数必须为正整数'})
+
+                min_time, max_time = get_time_range(temp_file_path)
+                total_duration = max_time - min_time
+                segment_duration = total_duration / num_segments
+                
+                params = []
+                for i in range(num_segments):
+                    start = min_time + i * segment_duration
+                    end = min_time + (i + 1) * segment_duration
+                    if i == num_segments - 1: end = max_time # 确保最后一段包含终点
+                    params.append({'start': start, 'end': end, 'name': f'{name_prefix}_{i+1}'})
+            except (ValueError, TypeError, FileNotFoundError) as e:
+                return jsonify({'success': False, 'error': f'处理等分参数失败: {e}'})
+        else: # 手动模式
+            params_str = source_data.get('params')
+            if not params_str: return jsonify({'success': False, 'error': '手动模式缺少分割参数'})
+            try: params = json.loads(params_str)
+            except json.JSONDecodeError: return jsonify({'success': False, 'error': '分割参数格式错误'})
+
+        if not params:
+            return jsonify({'success': False, 'error': '无法确定分割参数'})
         
         # 1. 创建临时输出目录
         session_id = str(uuid.uuid4())
@@ -583,6 +613,7 @@ def split_signal():
         result = splitter.process_file(temp_file_path, params, session_out_dir)
         
         if not result.get('success'):
+            shutil.rmtree(session_out_dir)
             return jsonify(result)
             
         # 3. 打包成 ZIP
@@ -590,13 +621,11 @@ def split_signal():
         zip_path = os.path.join(app.config['OUTPUT_FOLDER'], zip_filename)
         
         with zipfile.ZipFile(zip_path, 'w') as zipf:
-            for root, dirs, files in os.walk(session_out_dir):
+            for root, _, files in os.walk(session_out_dir):
                 for file in files:
                     zipf.write(os.path.join(root, file), file)
         
-        # 4. 清理临时文件
-        if os.path.exists(temp_file_path) and 'temp_' in temp_file_path:
-            os.remove(temp_file_path)
+        # 4. 清理目录
         shutil.rmtree(session_out_dir)
         
         return jsonify({
@@ -609,6 +638,13 @@ def split_signal():
     except Exception as e:
         logger.error(f"信号数据分割时出错: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)})
+    finally:
+        # 确保上传的临时文件被删除
+        if is_temp_file and temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except OSError as e:
+                logger.error(f"清理临时文件失败: {e}")
 
 @app.errorhandler(415)
 def handle_unsupported_media_type(error):
@@ -746,6 +782,38 @@ def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=
         win_mean = np.convolve(seq, np.ones(5)/5, mode='same')  # 平滑
         
         # 新增特征 - 对区分速度很重要
+
+@app.route('/api/preview_waveform', methods=['POST'])
+def api_preview_waveform():
+    """上传单个文件，返回处理前后的波形用于预览"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': '没有文件被上传'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': '没有选择文件'})
+
+    temp_path = os.path.join(app.config['TEMP_FOLDER'], f"preview_{uuid.uuid4()}_{secure_filename(file.filename)}")
+    
+    try:
+        file.save(temp_path)
+        
+        # 使用更新后的QTBFSScorer来处理单个文件
+        scorer = QTBFSScorer()
+        result = scorer._process_single_file(temp_path)
+        
+        if result and 'vis_data' in result:
+            return jsonify({'success': True, 'data': result['vis_data']})
+        else:
+            return jsonify({'success': False, 'error': '无法处理文件或提取特征'})
+            
+    except Exception as e:
+        logger.error(f"预览波形时出错: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
         # 1. 过零率（反映运动频率）
         zero_crossings = np.where(np.diff(np.signbit(seq - np.mean(seq))))[0]
         zero_cross_rate = len(zero_crossings) / len(seq)
