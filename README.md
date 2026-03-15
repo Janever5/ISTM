@@ -33,6 +33,7 @@
 ```bash
 pip install -r requirements.txt
 ```
+conda activate tensorflow_env
 
 ### 2. 启动后端服务器
 

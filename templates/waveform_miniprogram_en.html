@@ -3,897 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏥 Knee Rehabilitation Waveform Classification System</title>
+    <title>🏥 Knee Rehab Waveform Classification System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Global Style Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* Top Navigation Bar */
-        .top-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(90deg, #1a3a6d, #2c3e50);
-            color: white;
-            padding: 0 2rem;
-            height: 70px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo h1 {
-            font-size: 1.6rem;
-            font-weight: 600;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3498db, #80b0ff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        /* Main Container */
-        .main-container {
-            display: flex;
-            flex: 1;
-        }
-
-        /* Sidebar Navigation */
-        .side-nav {
-            width: 240px;
-            background: linear-gradient(to bottom, #2c3e50, #1a2636);
-            color: white;
-            padding: 2rem 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: calc(100vh - 70px);
-            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .side-nav ul {
-            list-style: none;
-        }
-
-        .side-nav li {
-            padding: 1.2rem 1.8rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .side-nav li:hover {
-            background-color: rgba(52, 152, 219, 0.3);
-        }
-
-        .side-nav li.active {
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            border-left: 4px solid #f1c40f;
-        }
-
-        .side-nav i {
-            margin-right: 12px;
-            width: 24px;
-            text-align: center;
-            font-size: 1.2rem;
-        }
-
-        /* AI Assistant Style */
-        .ai-assistant {
-            margin: 1.5rem;
-            padding: 1.5rem;
-            background: rgba(26, 38, 54, 0.7);
-            border-radius: 12px;
-            border-left: 5px solid #3498db;
-            backdrop-filter: blur(10px);
-        }
-
-        .ai-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .ai-header i {
-            margin-right: 0.8rem;
-            color: #3498db;
-            font-size: 1.5rem;
-        }
-
-        .ai-assistant h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .ai-assistant p {
-            font-size: 0.95rem;
-            color: #b8c2cc;
-            margin-bottom: 1.2rem;
-            line-height: 1.5;
-        }
-
-        .ai-button {
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.2rem;
-            border-radius: 30px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .ai-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-
-        /* Main Content Area */
-        .content {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .content-header h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .search-bar {
-            display: flex;
-            gap: 12px;
-        }
-
-        .search-bar input {
-            padding: 0.8rem 1.2rem;
-            border: 1px solid #ddd;
-            border-radius: 30px;
-            width: 280px;
-            font-size: 1rem;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-bar button {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-btn {
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            color: white;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-
-        .filter-btn {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .filter-btn:hover {
-            background: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        .add-btn {
-            background: linear-gradient(90deg, #2ecc71, #27ae60);
-            color: white;
-        }
-
-        .add-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
-        }
-
-        /* Stat Cards */
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1.8rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s;
-            border-top: 5px solid #3498db;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-card:nth-child(2) {
-            border-top-color: #e74c3c;
-        }
-
-        .stat-card:nth-child(3) {
-            border-top-color: #f39c12;
-        }
-
-        .stat-card:nth-child(4) {
-            border-top-color: #2ecc71;
-        }
-
-        .stat-card h3 {
-            color: #6c757d;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #3498db;
-            margin-bottom: 0.3rem;
-        }
-
-        .stat-value.alert {
-            color: #e74c3c;
-        }
-
-        .stat-value.warning {
-            color: #f39c12;
-        }
-
-        .stat-value.success {
-            color: #2ecc71;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 1rem;
-        }
-
-        /* AI Insights Card */
-        .ai-insights {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2.5rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border-left: 5px solid #3498db;
-        }
-
-        .ai-insights-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .ai-insights-header i {
-            color: #3498db;
-            margin-right: 0.8rem;
-            font-size: 1.5rem;
-        }
-
-        .ai-insights-header h3 {
-            font-size: 1.4rem;
-            font-weight: 600;
-        }
-
-        .ai-content {
-            margin-bottom: 1.5rem;
-        }
-
-        .ai-content p {
-            margin-bottom: 0.8rem;
-            line-height: 1.6;
-            font-size: 1.05rem;
-        }
-
-        .ai-content strong {
-            color: #2c3e50;
-        }
-
-        .ai-details-btn {
-            background: #f0f0f0;
-            color: #333;
-            padding: 0.8rem 1.5rem;
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .ai-details-btn:hover {
-            background: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        /* Form Section */
-        .form-section {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2.5rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        .form-section h3 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.8rem;
-            font-weight: 500;
-            color: #555;
-            font-size: 1.05rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 1rem 1.2rem;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-
-        .btn {
-            padding: 1rem 1.8rem;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            font-weight: 600;
-            font-size: 1.1rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            color: white;
-            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
-        }
-
-        .btn-success {
-            background: linear-gradient(90deg, #2ecc71, #27ae60);
-            color: white;
-            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(90deg, #95a5a6, #7f8c8d);
-            color: white;
-            box-shadow: 0 4px 10px rgba(149, 165, 166, 0.3);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(149, 165, 166, 0.4);
-        }
-
-        /* Results Section */
-        .results-section {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            margin-bottom: 2.5rem;
-        }
-
-        .results-section h3 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .result-card {
-            text-align: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            border-radius: 15px;
-            margin-bottom: 2rem;
-        }
-
-        .result-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 1rem 0;
-        }
-
-        .prediction-result {
-            color: #3498db;
-        }
-
-        .confidence-result {
-            color: #2ecc71;
-        }
-
-        .chart-container {
-            height: 300px;
-            margin-top: 2rem;
-        }
-
-        /* AI Dialog */
-        .ai-dialog {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 450px;
-            height: 550px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 1000;
-            border: 1px solid #eee;
-        }
-
-        .ai-dialog-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.2rem;
-            background: linear-gradient(90deg, #1a3a6d, #2c3e50);
-            color: white;
-        }
-
-        .ai-dialog-header h3 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.8rem;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .ai-dialog-content {
-            flex: 1;
-            padding: 1.5rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-        }
-
-        .ai-message, .doctor-message {
-            display: flex;
-            gap: 12px;
-            max-width: 85%;
-        }
-
-        .ai-message {
-            align-self: flex-start;
-        }
-
-        .doctor-message {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        .ai-avatar, .doctor-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
-            font-weight: bold;
-        }
-
-        .ai-avatar {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-        }
-
-        .doctor-avatar {
-            background: linear-gradient(135deg, #2c3e50, #1a2636);
-            color: white;
-        }
-
-        .message {
-            padding: 1rem;
-            border-radius: 15px;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-
-        .ai-message .message {
-            background-color: #f0f0f0;
-            border-bottom-left-radius: 0;
-        }
-
-        .doctor-message .message {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border-bottom-right-radius: 0;
-        }
-
-        .ai-dialog-input {
-            display: flex;
-            padding: 1.2rem;
-            border-top: 1px solid #eee;
-            background: #f8f9fa;
-        }
-
-        .ai-dialog-input input {
-            flex: 1;
-            padding: 0.9rem 1.2rem;
-            border: 1px solid #ddd;
-            border-radius: 30px;
-            margin-right: 12px;
-            font-size: 1rem;
-        }
-
-        .send-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .send-btn:hover {
-            transform: scale(1.05);
-        }
-
-        /* Training Progress Bar */
-        .training-progress {
-            margin-top: 1rem;
-        }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 20px;
-            background-color: #ecf0f1;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 0.5rem;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            border-radius: 10px;
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #7f8c8d;
-        }
-
-        /* File Info Display */
-        .file-info {
-            background: linear-gradient(135deg, #e8f4fc, #d1e7ff);
-            padding: 1rem;
-            border-radius: 10px;
-            margin-top: 1rem;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .file-info i {
-            color: #3498db;
-        }
-
-        /* Training Charts Container */
-        .training-charts {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .chart-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-        }
-
-        .chart-title {
-            text-align: center;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-        }
-
-        /* Notification Message */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-            transform: translateX(200%);
-            transition: transform 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            background: linear-gradient(90deg, #2ecc71, #27ae60);
-        }
-
-        .notification.error {
-            background: linear-gradient(90deg, #e74c3c, #c0392b);
-        }
-
-        .notification.info {
-            background: linear-gradient(90deg, #3498db, #2980b9);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .training-charts {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .side-nav {
-                width: 80px;
-            }
-            
-            .side-nav span {
-                display: none;
-            }
-            
-            .side-nav i {
-                margin-right: 0;
-                font-size: 1.3rem;
-            }
-            
-            .side-nav li {
-                justify-content: center;
-                padding: 1.2rem;
-            }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .top-nav {
-                padding: 0 1rem;
-                height: 60px;
-            }
-            
-            .logo h1 {
-                font-size: 1.3rem;
-            }
-            
-            .content {
-                padding: 1rem;
-            }
-            
-            .content-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .search-bar {
-                width: 100%;
-            }
-            
-            .search-bar input {
-                width: 100%;
-            }
-            
-            .stats-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .ai-dialog {
-                width: calc(100% - 40px);
-                height: calc(100% - 40px);
-            }
-        }
-
-        /* Loading Animation */
-        .spinner {
-            border: 4px solid rgba(52, 152, 219, 0.3);
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* File Upload Area */
-        .file-upload-area {
-            border: 2px dashed #3498db;
-            border-radius: 10px;
-            padding: 2rem;
-            text-align: center;
-            margin: 1rem 0;
-            transition: all 0.3s;
-            background: rgba(52, 152, 219, 0.05);
-        }
-
-        .file-upload-area.dragover {
-            background: rgba(52, 152, 219, 0.1);
-            border-color: #2980b9;
-        }
-
-        .file-upload-area i {
-            font-size: 3rem;
-            color: #3498db;
-            margin-bottom: 1rem;
-        }
-
-        .file-upload-area p {
-            margin: 0.5rem 0;
-        }
-
-        .file-upload-area .btn {
-            padding: 0.8rem 1.5rem;
-        }
-        
-        /* Upload Button Group */
-        .upload-btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .upload-btn-group .btn {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div class="app-container">
-        <!-- Top Navigation Bar -->
         <header class="top-nav">
             <div class="logo">
-                <h1>🏥 Knee Rehabilitation Waveform Classification System</h1>
+                <h1>🏥 Knee Rehab Waveform Classification System</h1>
             </div>
             <div class="user-info">
                 <span class="username">Researcher</span>
@@ -902,305 +23,273 @@
         </header>
 
         <div class="main-container">
-            <!-- Sidebar Navigation -->
             <nav class="side-nav">
                 <ul>
                     <li class="active" onclick="switchTab('train')"><i class="fas fa-brain"></i> <span>🧠 Model Training</span></li>
                     <li onclick="switchTab('predict')"><i class="fas fa-search"></i> <span>🔍 Waveform Prediction</span></li>
                     <li onclick="switchTab('visualize')"><i class="fas fa-chart-line"></i> <span>📊 Data Visualization</span></li>
+                    <li onclick="switchTab('split')"><i class="fas fa-cut"></i> <span>✂️ Data Split</span></li>
+                    <li onclick="switchTab('qtbfs')"><i class="fas fa-heartbeat"></i> <span>❤️ QTBFS Rehab Scoring</span></li>
                     <li onclick="switchTab('analysis')"><i class="fas fa-robot"></i> <span>🤖 AI Analysis</span></li>
                 </ul>
 
-                <!-- DeepSeek AI Assistant -->
                 <div class="ai-assistant">
                     <div class="ai-header">
                         <i class="fas fa-robot"></i>
                         <h3>AI Assistant</h3>
                     </div>
-                    <p>AI assistant can help you analyze waveform data and provide professional suggestions</p>
+                    <p>AI Assistant can help analyze waveform data and provide professional advice</p>
                     <button class="ai-button" onclick="toggleAIDialog()">
-                        <i class="fas fa-comments"></i> Consult AI Assistant
+                        <i class="fas fa-comments"></i> Ask AI Assistant
                     </button>
                 </div>
             </nav>
 
-            <!-- Main Content Area -->
             <main class="content">
-                <!-- Training Module -->
+
                 <div id="train-tab" class="tab-content">
-                    <div class="content-header">
-                        <h2>🧠 Model Training</h2>
-                    </div>
-
-                    <!-- Data Overview -->
+                    <div class="content-header"><h2>🧠 Model Training</h2></div>
                     <div class="stats-cards">
-                        <div class="stat-card">
-                            <h3><i class="fas fa-database"></i> Dataset</h3>
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">Angle Categories</div>
-                        </div>
-                        <div class="stat-card">
-                            <h3><i class="fas fa-file-alt"></i> Sample Count</h3>
-                            <div class="stat-value alert">1,248</div>
-                            <div class="stat-label">Waveform Files</div>
-                        </div>
-                        <div class="stat-card">
-                            <h3><i class="fas fa-tachometer-alt"></i> Model Performance</h3>
-                            <div class="stat-value warning">94.2%</div>
-                            <div class="stat-label">Accuracy</div>
-                        </div>
-                        <div class="stat-card">
-                            <h3><i class="fas fa-clock"></i> Training Duration</h3>
-                            <div class="stat-value success">2.5h</div>
-                            <div class="stat-label">Avg. Time</div>
-                        </div>
+                        <div class="stat-card"><h3><i class="fas fa-database"></i> Dataset</h3><div class="stat-value">12</div><div class="stat-label">Angle Classes</div></div>
+                        <div class="stat-card"><h3><i class="fas fa-file-alt"></i> Samples</h3><div class="stat-value alert">1,248</div><div class="stat-label">Waveform Files</div></div>
+                        <div class="stat-card"><h3><i class="fas fa-tachometer-alt"></i> Performance</h3><div class="stat-value warning">94.2%</div><div class="stat-label">Accuracy</div></div>
+                        <div class="stat-card"><h3><i class="fas fa-clock"></i> Training Time</h3><div class="stat-value success">2.5h</div><div class="stat-label">Avg Duration</div></div>
                     </div>
 
-                    <!-- AI Analysis Insights Card -->
                     <div class="ai-insights">
-                        <div class="ai-insights-header">
-                            <i class="fas fa-lightbulb"></i>
-                            <h3>AI Analysis Insights</h3>
-                        </div>
+                        <div class="ai-insights-header"><i class="fas fa-lightbulb"></i><h3>AI Insights</h3></div>
                         <div class="ai-content">
-                            <p><strong>Data Quality Assessment:</strong> Current dataset quality is good, recommend increasing samples in 30-60° range to optimize model performance.</p>
-                            <p><strong>Training Suggestions:</strong> Based on cross-validation results, recommend setting training epochs to 60-80 for optimal performance.</p>
-                            <p><strong>Model Optimization:</strong> Detected sample imbalance in some angle categories, recommend using oversampling techniques for optimization.</p>
+                            <p><strong>Data Quality:</strong> Current dataset quality is good. Consider adding more samples in the 30-60° range.</p>
+                            <p><strong>Training Advice:</strong> Recommended epoch count is 60-80 for optimal performance.</p>
                         </div>
                         <button class="ai-details-btn">View Detailed Analysis</button>
                     </div>
 
-                    <!-- Training Configuration Form -->
                     <div class="form-section">
                         <h3><i class="fas fa-cog"></i> Training Configuration</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="dataDir">📂 Data Directory (ZIP Archive)</label>
-                                <div class="file-upload-area" id="datasetUploadArea" ondrop="handleDatasetDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                <label>📂 Dataset (ZIP Archive)</label>
+                                <div class="file-upload-area" onclick="document.getElementById('datasetFileInput').click()">
                                     <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Drag ZIP file here to upload</p>
-                                    <p>Or</p>
-                                    <button class="btn btn-secondary" onclick="document.getElementById('datasetFileInput').click()">
-                                        <i class="fas fa-file-archive"></i> Select ZIP File
-                                    </button>
+                                    <p>Click to select ZIP dataset</p>
                                     <input type="file" id="datasetFileInput" style="display: none;" accept=".zip" onchange="handleDatasetSelect(event)">
                                 </div>
-                                <div id="datasetFileInfo" class="file-info" style="display: none;">
-                                    <i class="fas fa-file-archive"></i>
-                                    <span>Selected Dataset: <span id="datasetFileName"></span></span>
-                                </div>
+                                <div id="datasetFileInfo" class="file-info" style="display: none;">Selected: <span id="datasetFileName"></span></div>
                             </div>
-
-                            <div class="form-group">
-                                <label for="modelPath">💾 Model Save Path</label>
-                                <input type="text" id="modelPath" class="form-control" value="waveform_model.pth" placeholder="Enter model save path">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="epochs">🔄 Training Epochs</label>
-                                <input type="number" id="epochs" class="form-control" value="50" min="1" max="1000">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="batchSize">📦 Batch Size</label>
-                                <input type="number" id="batchSize" class="form-control" value="64" min="1" max="512">
-                            </div>
+                            <div class="form-group"><label for="modelPath">💾 Model Save Path</label><input type="text" id="modelPath" class="form-control" value="waveform_model.pth"></div>
+                            <div class="form-group"><label for="epochs">🔄 Epochs</label><input type="number" id="epochs" class="form-control" value="50"></div>
+                            <div class="form-group"><label for="batchSize">📦 Batch Size</label><input type="number" id="batchSize" class="form-control" value="64"></div>
                         </div>
-
-                        <button class="btn btn-primary" onclick="startTraining()" style="margin-top: 20px;">
-                            <i class="fas fa-rocket"></i> Start Training
-                        </button>
+                        <button class="btn btn-primary" onclick="startTraining()" style="margin-top: 20px;"><i class="fas fa-rocket"></i> Start Training</button>
                     </div>
 
-                    <!-- Training Progress and Charts -->
                     <div class="results-section">
                         <h3><i class="fas fa-chart-line"></i> Training Progress</h3>
                         <div class="training-progress">
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" id="trainingProgressBar" style="width: 0%;"></div>
-                            </div>
-                            <div class="progress-text" id="progressText">Waiting to start training...</div>
+                            <div class="progress-bar-container"><div class="progress-bar" id="trainingProgressBar" style="width: 0%;"></div></div>
+                            <div class="progress-text" id="progressText">Waiting to start...</div>
                         </div>
-
                         <div class="training-charts">
-                            <div class="chart-box">
-                                <div class="chart-title">Training Loss Curve</div>
-                                <div class="chart-container">
-                                    <canvas id="lossChart"></canvas>
-                                </div>
-                            </div>
-                            <div class="chart-box">
-                                <div class="chart-title">Accuracy Curve</div>
-                                <div class="chart-container">
-                                    <canvas id="accuracyChart"></canvas>
-                                </div>
-                            </div>
+                            <div class="chart-box"><div class="chart-title">Training Loss Curve</div><div class="chart-container"><canvas id="lossChart"></canvas></div></div>
+                            <div class="chart-box"><div class="chart-title">Accuracy Curve</div><div class="chart-container"><canvas id="accuracyChart"></canvas></div></div>
                         </div>
                     </div>
 
-                    <!-- Training Logs -->
                     <div class="form-section">
-                        <h3><i class="fas fa-clipboard-list"></i> Training Logs</h3>
-                        <div id="trainingLog" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
-                            Waiting to start training...
-                        </div>
+                        <h3><i class="fas fa-clipboard-list"></i> Training Log</h3>
+                        <div id="trainingLog" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; height: 200px; overflow-y: auto; font-family: monospace;">Waiting to start...</div>
                     </div>
                 </div>
 
-                <!-- Prediction Module -->
                 <div id="predict-tab" class="tab-content" style="display: none;">
-                    <div class="content-header">
-                        <h2>🔍 Waveform Prediction</h2>
-                    </div>
-
-                    <!-- Prediction Configuration Form -->
+                    <div class="content-header"><h2>🔍 Waveform Prediction</h2></div>
                     <div class="form-section">
                         <h3><i class="fas fa-sliders-h"></i> Prediction Configuration</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="predictModelFile">🤖 Model File</label>
-                                <div class="file-upload-area" id="modelUploadArea" ondrop="handleModelDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                                    <i class="fas fa-microchip"></i>
-                                    <p>Drag PTH model file here to upload</p>
-                                    <p>Or</p>
-                                    <button class="btn btn-secondary" onclick="document.getElementById('modelFileInput').click()">
-                                        <i class="fas fa-microchip"></i> Select Model File
-                                    </button>
+                                <label>🤖 Model File</label>
+                                <div class="file-upload-area" onclick="document.getElementById('modelFileInput').click()">
+                                    <i class="fas fa-microchip"></i><p>Select model file (.pth)</p>
                                     <input type="file" id="modelFileInput" style="display: none;" accept=".pth" onchange="handleModelSelect(event)">
                                 </div>
-                                <div id="modelFileInfo" class="file-info" style="display: none;">
-                                    <i class="fas fa-microchip"></i>
-                                    <span>Selected Model: <span id="modelFileName"></span></span>
-                                </div>
+                                <div id="modelFileInfo" class="file-info" style="display: none;"><span>Selected: <span id="modelFileName"></span></span></div>
                             </div>
-
                             <div class="form-group">
-                                <label for="dataFile">📄 Data File</label>
-                                <div class="file-upload-area" id="fileUploadArea" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Drag file here to upload</p>
-                                    <p>Supports CSV/XLSX/XLS/TXT formats</p>
-                                    <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
-                                        <i class="fas fa-file-import"></i> Select File
-                                    </button>
+                                <label>📄 Data File</label>
+                                <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i><p>Select data file (CSV/Excel)</p>
                                     <input type="file" id="fileInput" style="display: none;" accept=".csv,.xlsx,.xls,.txt" onchange="handleFileSelect(event)">
                                 </div>
-                                <div id="fileInfo" class="file-info" style="display: none;">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span>Selected File: <span id="fileName"></span></span>
-                                </div>
+                                <div id="fileInfo" class="file-info" style="display: none;"><span>Selected: <span id="fileName"></span></span></div>
                             </div>
                         </div>
-
-                        <button class="btn btn-success" onclick="startPrediction()" style="margin-top: 20px;">
-                            <i class="fas fa-bolt"></i> Start Prediction
-                        </button>
+                        <button class="btn btn-success" onclick="startPrediction()" style="margin-top: 20px;"><i class="fas fa-bolt"></i> Start Prediction</button>
                     </div>
-
-                    <!-- Prediction Results -->
                     <div class="results-section">
                         <h3><i class="fas fa-poll"></i> Prediction Results</h3>
                         <div class="result-card">
-                            <div>Main Category</div>
-                            <div class="result-value prediction-result" id="predictionResult">--</div>
-                            <div>Confidence</div>
-                            <div class="result-value confidence-result" id="confidenceResult">--</div>
+                            <div>Primary Class: <span class="result-value prediction-result" id="predictionResult">--</span></div>
+                            <div>Confidence: <span class="result-value confidence-result" id="confidenceResult">--</span></div>
                         </div>
-
-                        <!-- Probability Distribution Chart -->
-                        <h3><i class="fas fa-chart-pie"></i> Angle Composition Distribution</h3>
-                        <div class="chart-container">
-                            <canvas id="probabilityChart"></canvas>
-                        </div>
+                        <h3><i class="fas fa-chart-pie"></i> Angle Component Distribution</h3>
+                        <div class="chart-container"><canvas id="probabilityChart"></canvas></div>
                     </div>
                 </div>
 
-                <!-- Visualization Module -->
                 <div id="visualize-tab" class="tab-content" style="display: none;">
-                    <div class="content-header">
-                        <h2>📊 Data Visualization</h2>
-                    </div>
-
-                    <!-- Visualization Control -->
+                    <div class="content-header"><h2>📊 Data Visualization</h2></div>
                     <div class="form-section">
-                        <h3><i class="fas fa-sliders-h"></i> Visualization Control</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="visDataFile">📄 Data File</label>
-                                <div class="file-upload-area" id="visFileUploadArea" ondrop="handleVisFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Drag file here to upload</p>
-                                    <p>Supports CSV/XLSX/XLS/TXT formats</p>
-                                    <button class="btn btn-secondary" onclick="document.getElementById('visFileInput').click()">
-                                        <i class="fas fa-file-import"></i> Select File
-                                    </button>
-                                    <input type="file" id="visFileInput" style="display: none;" accept=".csv,.xlsx,.xls,.txt" onchange="handleVisFileSelect(event)">
-                                </div>
-                                <div id="visFileInfo" class="file-info" style="display: none; margin-top: 1rem;">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span>Selected File: <span id="visFileName"></span></span>
-                                </div>
-                            </div>
+                        <div class="file-upload-area" onclick="document.getElementById('visFileInput').click()">
+                            <i class="fas fa-chart-line"></i><p>Click to select data file for plotting</p>
+                            <input type="file" id="visFileInput" style="display: none;" accept=".csv,.xlsx,.xls,.txt" onchange="handleVisFileSelect(event)">
                         </div>
-
-                        <button class="btn btn-primary" onclick="visualizeData()" style="margin-top: 20px;">
-                            <i class="fas fa-eye"></i> Generate Visualization
-                        </button>
+                        <div id="visFileInfo" class="file-info" style="display: none; margin-top: 1rem;">Selected: <span id="visFileName"></span></div>
+                        <button class="btn btn-primary" onclick="visualizeData()" style="margin-top: 20px;">Generate Chart</button>
                     </div>
-
-                    <!-- Chart Area -->
                     <div class="results-section">
                         <h3><i class="fas fa-wave-square"></i> Waveform Chart</h3>
-                        <div class="chart-container">
-                            <canvas id="waveformChart"></canvas>
-                        </div>
+                        <div class="chart-container"><canvas id="waveformChart"></canvas></div>
                     </div>
                 </div>
 
-                <!-- AI Analysis Module -->
-                <div id="analysis-tab" class="tab-content" style="display: none;">
-                    <div class="content-header">
-                        <h2>🤖 AI Intelligent Analysis</h2>
-                    </div>
+                <div id="split-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>✂️ Data Split</h2></div>
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> Data Split Configuration</h3>
+                        <div class="form-group">
+                            <label>📄 Upload CSV/Excel File</label>
+                            <div class="file-upload-area" onclick="document.getElementById('splitFileInput').click()">
+                                <i class="fas fa-cloud-upload-alt"></i><p>Select file</p>
+                                <input type="file" id="splitFileInput" style="display: none;" accept=".csv,.xlsx,.xls" onchange="handleSplitFileSelect(event)">
+                            </div>
+                            <div id="splitFileInfo" class="file-info" style="display: none; margin-top: 1rem;">Selected: <span id="splitFileName"></span></div>
+                        </div>
 
-                    <!-- AI Analysis Report -->
-                    <div class="results-section">
-                        <h3><i class="fas fa-file-medical-alt"></i> AI Analysis Report</h3>
-                        <div id="aiReportContent">
-                            <div style="text-align: center; padding: 3rem; color: #6c757d;">
-                                <i class="fas fa-robot" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                                <p style="font-size: 1.2rem;">Please perform waveform prediction first to generate AI analysis report</p>
+                        <div class="form-group">
+                            <label>Mode Selection</label>
+                            <div class="radio-group">
+                                <input type="radio" id="splitModeManual" name="splitMode" value="manual" checked onchange="toggleSplitMode()">
+                                <label for="splitModeManual">Manual Split</label>
+                                <input type="radio" id="splitModeEqual" name="splitMode" value="equal" onchange="toggleSplitMode()">
+                                <label for="splitModeEqual">Equal Split</label>
                             </div>
                         </div>
                     </div>
+
+                    <div id="split-manual-section">
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label for="segmentCount">🔢 Manual Segment Count</label>
+                                <input type="number" id="segmentCount" class="form-control" value="1" min="1">
+                                <button class="btn btn-secondary" onclick="confirmSegmentCount()" style="margin-top: 10px;">Confirm Count</button>
+                            </div>
+                        </div>
+                        <div class="form-section" id="splitParamsSection" style="display: none;">
+                            <h3><i class="fas fa-tasks"></i> Split Parameters</h3>
+                            <div class="table-container">
+                                <table class="param-table">
+                                    <thead><tr><th>Segment</th><th>Start (X)</th><th>End (X)</th><th>Name</th></tr></thead>
+                                    <tbody id="splitParamsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="split-equal-section" style="display: none;">
+                        <div class="form-section">
+                            <h3><i class="fas fa-equals"></i> Equal Split Configuration</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="numSegments">🔢 Segment Count</label>
+                                    <input type="number" id="numSegments" class="form-control" value="5" min="1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="namePrefix">🏷️ File Name Prefix</label>
+                                    <input type="text" id="namePrefix" class="form-control" value="segment">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-wave-square"></i> Waveform Preview</h3>
+                        <div class="chart-container"><canvas id="splitVisualizationChart"></canvas></div>
+                    </div>
+
+                    <div class="form-section">
+                         <button class="btn btn-primary" onclick="executeSplit()">Execute & Download</button>
+                    </div>
                 </div>
+
+                <div id="qtbfs-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>❤️ QTBFS Rehab Scoring System</h2></div>
+                    <div class="form-section">
+                        <h3><i class="fas fa-cog"></i> Scoring Configuration</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>📁 State0 Reference Files (Healthy Control)</label>
+                                <div class="file-upload-area" onclick="document.getElementById('state0FolderInput').click()">
+                                    <i class="fas fa-folder-open"></i><p>Select reference files (multi-select)</p>
+                                    <input type="file" id="state0FolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleQtbfsFileUpload('state0', event)">
+                                </div>
+                                <div id="state0FileList" class="file-list-display"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>📁 Current State Files (Under Evaluation)</label>
+                                <div class="file-upload-area" onclick="document.getElementById('currentFolderInput').click()">
+                                    <i class="fas fa-folder-open"></i><p>Select current files (multi-select)</p>
+                                    <input type="file" id="currentFolderInput" style="display: none;" multiple accept=".csv,.xlsx,.xls" onchange="handleQtbfsFileUpload('current', event)">
+                                </div>
+                                <div id="currentFileList" class="file-list-display"></div>
+                            </div>
+                        </div>
+                        <div class="form-section" style="margin-top:20px;">
+                           <h3><i class="fas fa-chart-line"></i> Upload Waveform Preview</h3>
+                           <div class="chart-grid">
+                               <div id="state0ChartContainer" class="chart-container-grid">
+                                   <h4>State0 Waveform</h4>
+                                   <canvas id="state0WaveformChart"></canvas>
+                                   <div class="placeholder" id="state0Placeholder">Waveform will appear here after upload</div>
+                               </div>
+                               <div id="currentChartContainer" class="chart-container-grid">
+                                   <h4>Current State Waveform</h4>
+                                   <canvas id="currentWaveformChart"></canvas>
+                                   <div class="placeholder" id="currentPlaceholder">Waveform will appear here after upload</div>
+                               </div>
+                           </div>
+                       </div>
+                        <button class="btn btn-primary" onclick="calculateQTBFSScore()" style="margin-top: 20px;">Calculate Score</button>
+                    </div>
+
+                    <div id="qtbfsResults" class="results-section" style="display: none;">
+                        <div style="text-align: center; color: #666;"><p>Please upload data and calculate</p></div>
+                    </div>
+                    <div id="qtbfsRadarContainer" class="results-section" style="display: none;">
+                        <h3><i class="fas fa-compass"></i> Comprehensive Ability Radar Chart</h3>
+                        <div class="chart-container" style="max-width: 500px; margin: auto;">
+                            <canvas id="qtbfsRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analysis-tab" class="tab-content" style="display: none;">
+                    <div class="content-header"><h2>🤖 AI Analysis</h2></div>
+                    <div class="results-section">
+                        <h3><i class="fas fa-file-medical-alt"></i> AI Analysis Report</h3>
+                        <div id="aiReportContent"><div style="text-align: center; color: #666;"><p>Please run waveform prediction first</p></div></div>
+                    </div>
+                </div>
+
             </main>
         </div>
     </div>
 
-    <!-- AI Assistant Dialog -->
     <div class="ai-dialog" id="aiDialog">
-        <div class="ai-dialog-header">
-            <h3><i class="fas fa-robot"></i> AI Assistant</h3>
-            <button class="close-btn" onclick="toggleAIDialog()">×</button>
-        </div>
+        <div class="ai-dialog-header"><h3><i class="fas fa-robot"></i> AI Assistant</h3><button class="close-btn" onclick="toggleAIDialog()">×</button></div>
         <div class="ai-dialog-content" id="aiDialogContent">
-            <div class="ai-message">
-                <div class="ai-avatar">AI</div>
-                <div class="message">Hello! I'm your AI assistant, I can help you analyze knee rehabilitation waveform data and provide professional angle classification suggestions. How can I assist you?</div>
-            </div>
-            <div class="ai-message">
-                <div class="ai-avatar">AI</div>
-                <div class="message">
-                    <p>I can help you:</p>
-                    <ol>
-                        <li>Analyze quality and characteristics of waveform data</li>
-                        <li>Explain results and confidence of angle classification</li>
-                        <li>Provide model optimization suggestions</li>
-                        <li>Answer technical questions</li>
-                    </ol>
-                </div>
-            </div>
+            <div class="ai-message"><div class="ai-avatar">AI</div><div class="message">Hello! I'm your AI assistant.</div></div>
         </div>
         <div class="ai-dialog-input">
             <input type="text" placeholder="Enter your question..." id="aiQuestionInput">
@@ -1208,876 +297,8 @@
         </div>
     </div>
 
-    <!-- Notification Message -->
     <div class="notification" id="notification"></div>
 
-    <script>
-        // Initialize charts
-        let probabilityChart = null;
-        let waveformChart = null;
-        let lossChart = null;
-        let accuracyChart = null;
-        
-        // Training data
-        let trainingData = {
-            epochs: [],
-            losses: [],
-            accuracies: []
-        };
-        
-        // File references
-        let selectedDatasetFile = null;
-        let selectedModelFile = null;
-        let selectedDataFile = null;
-        let selectedVisFile = null;
-
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = 'notification ' + type;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Switch tabs
-        function switchTab(tabName) {
-            // Update tab button status
-            document.querySelectorAll('.side-nav li').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show corresponding tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.style.display = 'none';
-            });
-            
-            document.getElementById(tabName + '-tab').style.display = 'block';
-        }
-        
-        // Toggle AI assistant dialog
-        function toggleAIDialog() {
-            var dialog = document.getElementById('aiDialog');
-            if (dialog.style.display === 'none' || dialog.style.display === '') {
-                dialog.style.display = 'flex';
-            } else {
-                dialog.style.display = 'none';
-            }
-        }
-        
-        // File drag handling
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.closest('.file-upload-area').classList.add('dragover');
-        }
-        
-        function handleDragLeave(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.closest('.file-upload-area').classList.remove('dragover');
-        }
-        
-        // Dataset file handling
-        function handleDatasetDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleDatasetFiles(e.dataTransfer.files);
-            }
-        }
-        
-        function handleDatasetSelect(e) {
-            if (e.target.files.length) {
-                handleDatasetFiles(e.target.files);
-            }
-        }
-        
-        function handleDatasetFiles(files) {
-            const file = files[0];
-            if (!file.name.endsWith('.zip')) {
-                showNotification('Please upload ZIP format dataset file', 'error');
-                return;
-            }
-            
-            selectedDatasetFile = file;
-            document.getElementById('datasetFileName').textContent = file.name;
-            document.getElementById('datasetFileInfo').style.display = 'flex';
-            showNotification(`Dataset selected: ${file.name}`, 'info');
-        }
-        
-        // Model file handling
-        function handleModelDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleModelFiles(e.dataTransfer.files);
-            }
-        }
-        
-        function handleModelSelect(e) {
-            if (e.target.files.length) {
-                handleModelFiles(e.target.files);
-            }
-        }
-        
-        function handleModelFiles(files) {
-            const file = files[0];
-            if (!file.name.endsWith('.pth')) {
-                showNotification('Please upload PTH format model file', 'error');
-                return;
-            }
-            
-            selectedModelFile = file;
-            document.getElementById('modelFileName').textContent = file.name;
-            document.getElementById('modelFileInfo').style.display = 'flex';
-            showNotification(`Model selected: ${file.name}`, 'info');
-        }
-        
-        // Prediction data file handling
-        function handleFileDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleDataFiles(e.dataTransfer.files, 'dataFile', 'fileName', 'fileInfo');
-            }
-        }
-        
-        function handleFileSelect(e) {
-            if (e.target.files.length) {
-                handleDataFiles(e.target.files, 'dataFile', 'fileName', 'fileInfo');
-            }
-        }
-        
-        // Visualization data file handling
-        function handleVisFileDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const uploadArea = e.target.closest('.file-upload-area');
-            uploadArea.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length) {
-                handleDataFiles(e.dataTransfer.files, 'visDataFile', 'visFileName', 'visFileInfo');
-            }
-        }
-        
-        function handleVisFileSelect(e) {
-            if (e.target.files.length) {
-                handleDataFiles(e.target.files, 'visDataFile', 'visFileName', 'visFileInfo');
-            }
-        }
-        
-        function handleDataFiles(files, fileId, nameId, infoId) {
-            const file = files[0];
-            const validExtensions = ['.csv', '.xlsx', '.xls', '.txt'];
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            
-            if (!validExtensions.includes(fileExtension)) {
-                showNotification('Unsupported file format, please select CSV, Excel or TXT file', 'error');
-                return;
-            }
-            
-            // Save file reference
-            if (fileId === 'dataFile') {
-                selectedDataFile = file;
-            } else {
-                selectedVisFile = file;
-            }
-            
-            // Update UI
-            document.getElementById(nameId).textContent = file.name;
-            document.getElementById(infoId).style.display = 'flex';
-            showNotification(`File selected: ${file.name}`, 'info');
-        }
-        
-        // Update training logs
-        function updateTrainingLog(message) {
-            const logElement = document.getElementById('trainingLog');
-            logElement.innerHTML += message + '\n';
-            logElement.scrollTop = logElement.scrollHeight;
-        }
-        
-        // Start training
-        function startTraining() {
-            if (!selectedDatasetFile) {
-                showNotification("Please select dataset file first!", 'error');
-                return;
-            }
-            
-            const modelPath = document.getElementById('modelPath').value;
-            const epochs = parseInt(document.getElementById('epochs').value);
-            const batchSize = parseInt(document.getElementById('batchSize').value);
-            
-            updateTrainingLog("Starting to upload dataset...");
-            
-            // Create FormData object
-            const formData = new FormData();
-            formData.append('file', selectedDatasetFile);
-            
-            // Upload dataset
-            fetch('/api/upload_dataset', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateTrainingLog(`Dataset uploaded successfully: ${data.dataset_path}`);
-                    
-                    // Start training
-                    const trainData = {
-                        data_dir: data.dataset_path,
-                        model_path: modelPath,
-                        epochs: epochs,
-                        batch_size: batchSize
-                    };
-                    
-                    updateTrainingLog("Starting model training...");
-                    
-                    fetch('/api/train', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(trainData)
-                    })
-                    .then(response => response.json())
-                    .then(trainResult => {
-                        if (trainResult.success) {
-                            updateTrainingLog("Training task started...");
-                            // Start polling training status
-                            pollTrainingStatus();
-                        } else {
-                            updateTrainingLog(`Training startup failed: ${trainResult.error}`);
-                            showNotification(`Training startup failed: ${trainResult.error}`, 'error');
-                        }
-                    })
-                    .catch(error => {
-                        updateTrainingLog(`Training startup error: ${error.message}`);
-                        showNotification(`Training startup error: ${error.message}`, 'error');
-                    });
-                } else {
-                    updateTrainingLog(`Dataset upload failed: ${data.error}`);
-                    showNotification(`Dataset upload failed: ${data.error}`, 'error');
-                }
-            })
-            .catch(error => {
-                updateTrainingLog(`Dataset upload error: ${error.message}`);
-                showNotification(`Dataset upload error: ${error.message}`, 'error');
-            });
-        }
-        
-        // Poll training status
-        function pollTrainingStatus() {
-            const pollInterval = setInterval(() => {
-                fetch('/api/train_status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update progress bar
-                        document.getElementById('trainingProgressBar').style.width = data.progress + '%';
-                        document.getElementById('progressText').textContent = data.message;
-                        
-                        // Update logs
-                        if (data.logs && data.logs.length > 0) {
-                            data.logs.forEach(log => {
-                                if (!document.getElementById('trainingLog').innerText.includes(log)) {
-                                    updateTrainingLog(log);
-                                }
-                            });
-                        }
-                        
-                        // Update chart data
-                        if (data.chart_data) {
-                            trainingData.epochs = data.chart_data.epochs;
-                            trainingData.losses = data.chart_data.losses;
-                            trainingData.accuracies = data.chart_data.accuracies;
-                            updateTrainingCharts();
-                        }
-                        
-                        // Training completed
-                        if (data.status === 'completed') {
-                            clearInterval(pollInterval);
-                            showNotification('Model training completed!', 'success');
-                        } else if (data.status === 'error') {
-                            clearInterval(pollInterval);
-                            showNotification('Training error, please check logs', 'error');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error getting training status:', error);
-                });
-            }, 1000);
-        }
-        
-        // Initialize training charts
-        function initTrainingCharts() {
-            const lossCtx = document.getElementById('lossChart').getContext('2d');
-            const accCtx = document.getElementById('accuracyChart').getContext('2d');
-            
-            if (lossChart) lossChart.destroy();
-            if (accuracyChart) accuracyChart.destroy();
-            
-            lossChart = new Chart(lossCtx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Training Loss',
-                        data: [],
-                        borderColor: '#e74c3c',
-                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        borderWidth: 2,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Epoch'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Loss'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            accuracyChart = new Chart(accCtx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Accuracy',
-                        data: [],
-                        borderColor: '#2ecc71',
-                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                        borderWidth: 2,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Epoch'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Accuracy'
-                            },
-                            min: 0,
-                            max: 1
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Update training charts
-        function updateTrainingCharts() {
-            if (lossChart && accuracyChart) {
-                lossChart.data.labels = trainingData.epochs;
-                lossChart.data.datasets[0].data = trainingData.losses;
-                lossChart.update();
-                
-                accuracyChart.data.labels = trainingData.epochs;
-                accuracyChart.data.datasets[0].data = trainingData.accuracies;
-                accuracyChart.update();
-            }
-        }
-        
-        // Start prediction
-        function startPrediction() {
-            if (!selectedModelFile) {
-                showNotification("Please select model file first!", 'error');
-                return;
-            }
-            
-            if (!selectedDataFile) {
-                showNotification("Please select data file first!", 'error');
-                return;
-            }
-            
-            updateTrainingLog(`Starting to upload model file...`);
-            
-            // Upload model file
-            const modelFormData = new FormData();
-            modelFormData.append('file', selectedModelFile);
-            
-            fetch('/api/upload_model', {
-                method: 'POST',
-                body: modelFormData
-            })
-            .then(response => response.json())
-            .then(modelData => {
-                if (modelData.success) {
-                    updateTrainingLog(`Model loaded successfully`);
-                    
-                    // Upload data file and perform prediction
-                    updateTrainingLog(`Starting to upload data file...`);
-                    
-                    const dataFormData = new FormData();
-                    dataFormData.append('file', selectedDataFile);
-                    
-                    fetch('/api/predict', {
-                        method: 'POST',
-                        body: dataFormData
-                    })
-                    .then(response => response.json())
-                    .then(predictionResult => {
-                        if (predictionResult.success) {
-                            // Update UI
-                            document.getElementById('predictionResult').textContent = predictionResult.predicted_class;
-                            document.getElementById('confidenceResult').textContent = (predictionResult.confidence * 100).toFixed(2) + '%';
-                            
-                            // Update probability distribution chart
-                            updateProbabilityChart(predictionResult.all_probabilities);
-                            
-                            // Generate AI analysis report
-                            generateAIReport(
-                                predictionResult.predicted_class, 
-                                predictionResult.confidence, 
-                                predictionResult.all_probabilities
-                            );
-                            
-                            updateTrainingLog(`✅ Prediction completed!`);
-                            updateTrainingLog(`  Prediction result: ${predictionResult.predicted_class}`);
-                            updateTrainingLog(`  Confidence: ${(predictionResult.confidence * 100).toFixed(2)}%`);
-                            
-                            showNotification('Prediction completed!', 'success');
-                        } else {
-                            updateTrainingLog(`Prediction failed: ${predictionResult.error}`);
-                            showNotification(`Prediction failed: ${predictionResult.error}`, 'error');
-                        }
-                    })
-                    .catch(error => {
-                        updateTrainingLog(`Prediction error: ${error.message}`);
-                        showNotification(`Prediction error: ${error.message}`, 'error');
-                    });
-                } else {
-                    updateTrainingLog(`Model loading failed: ${modelData.error}`);
-                    showNotification(`Model loading failed: ${modelData.error}`, 'error');
-                }
-            })
-            .catch(error => {
-                updateTrainingLog(`Model upload error: ${error.message}`);
-                showNotification(`Model upload error: ${error.message}`, 'error');
-            });
-        }
-        
-        // Update probability distribution chart
-        function updateProbabilityChart(predictions) {
-            const ctx = document.getElementById('probabilityChart').getContext('2d');
-            
-            // If chart already exists, destroy it first
-            if (probabilityChart) {
-                probabilityChart.destroy();
-            }
-            
-            // Prepare data
-            const labels = Object.keys(predictions);
-            const data = Object.values(predictions).map(p => (p * 100).toFixed(2));
-            
-            // Generate colors
-            const backgroundColors = [
-                'rgba(52, 152, 219, 0.7)',
-                'rgba(46, 204, 113, 0.7)',
-                'rgba(241, 196, 15, 0.7)',
-                'rgba(155, 89, 182, 0.7)',
-                'rgba(230, 126, 34, 0.7)',
-                'rgba(231, 76, 60, 0.7)'
-            ];
-            
-            // Create pie chart
-            probabilityChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: backgroundColors.slice(0, labels.length),
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: {
-                                    size: 12
-                                },
-                                padding: 20
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.label}: ${context.raw}%`;
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Angle Classification Probability Distribution',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Visualize data
-        function visualizeData() {
-            if (!selectedVisFile) {
-                showNotification("Please select data file first!", 'error');
-                return;
-            }
-            
-            // Here should actually process the file and generate visualization
-            // Since this is frontend demo, we generate simulation data
-            
-            updateTrainingLog(`Starting data visualization: ${selectedVisFile.name}\n`);
-            
-            const ctx = document.getElementById('waveformChart').getContext('2d');
-            
-            // If chart already exists, destroy it first
-            if (waveformChart) {
-                waveformChart.destroy();
-            }
-            
-            // Generate simulation waveform data
-            const dataPoints = 50;
-            const labels = Array.from({length: dataPoints}, (_, i) => i);
-            const data = Array.from({length: dataPoints}, () => Math.random() * 100);
-            
-            // Add periodic features
-            for (let i = 0; i < dataPoints; i++) {
-                data[i] += 50 * Math.sin(i * 0.5) + 30 * Math.cos(i * 0.3);
-            }
-            
-            // Create line chart
-            waveformChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Current Value (A)',
-                        data: data,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3,
-                        pointRadius: 0,
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Time Point',
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Current Value (A)',
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Waveform Data Visualization',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
-            });
-            
-            updateTrainingLog('✅ Waveform visualization generated!\n');
-            showNotification('Waveform visualization generated!', 'success');
-        }
-        
-        // Generate AI analysis report (professional doctor style)
-        function generateAIReport(predictedClass, confidence, probabilities) {
-            const sortedProbs = Object.entries(probabilities).sort((a, b) => b[1] - a[1]);
-            
-            // Generate professional doctor style rehabilitation suggestions
-            const recommendations = [
-                "Continue current rehabilitation training program, maintaining a frequency of 3-4 times per week.",
-                "Based on current angle performance, appropriately increase training intensity and duration for this angle.",
-                "Be aware that if discomfort occurs during training, stop immediately and seek medical review in time.",
-                "Recommend combining with physical therapist for manual therapy to accelerate rehabilitation process.",
-                "Increase functional training in daily life, such as stair climbing, squatting movements, etc.",
-                "Maintain good living habits, ensure adequate sleep, which helps tissue repair."
-            ];
-            
-            // Randomly select 2-3 suggestions
-            const selectedRecommendations = [];
-            const numRecommendations = Math.floor(Math.random() * 2) + 2; // 2-3 items
-            for (let i = 0; i < numRecommendations; i++) {
-                const randomIndex = Math.floor(Math.random() * recommendations.length);
-                if (!selectedRecommendations.includes(recommendations[randomIndex])) {
-                    selectedRecommendations.push(recommendations[randomIndex]);
-                }
-            }
-            
-            let reportHTML = `
-                <div style="padding: 1.5rem;">
-                    <h3 style="color: #2c3e50; margin-bottom: 1.5rem; font-size: 1.4rem;">
-                        <i class="fas fa-file-medical-alt"></i> Rehabilitation Assessment Report
-                    </h3>
-                    
-                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">
-                            <strong>📅 Assessment Time:</strong> ${new Date().toLocaleString()}
-                        </p>
-                        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">
-                            <strong>🎯 Main Angle:</strong> Your knee joint currently mainly moves in the <span style="color: #3498db; font-weight: bold;">${predictedClass}</span> range
-                        </p>
-                        <p style="font-size: 1.2rem;">
-                            <strong>📊 Main Angle Confidence:</strong> <span style="color: #2ecc71; font-weight: bold;">${(confidence * 100).toFixed(2)}%</span>
-                        </p>
-                    </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-list-ol"></i> Angle Composition Analysis
-                    </h4>
-                    <div style="margin-bottom: 1.5rem;">
-            `;
-            
-            sortedProbs.forEach(([angle, prob], index) => {
-                const marker = index === 0 ? '🏆' : (index < 3 ? '⭐' : '▫️');
-                const level = prob > 0.7 ? 'Excellent' : prob > 0.5 ? 'Good' : prob > 0.3 ? 'Fair' : 'Poor';
-                reportHTML += `
-                    <p style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span>${marker} ${angle} (${level})</span>
-                        <span style="font-weight: bold; color: ${index === 0 ? '#3498db' : '#6c757d'}">${(prob * 100).toFixed(2)}%</span>
-                    </p>
-                `;
-            });
-            
-            reportHTML += `
-                    </div>
-                    
-                    <h4 style="color: #3498db; margin: 1.5rem 0 1rem; font-size: 1.2rem;">
-                        <i class="fas fa-stethoscope"></i> Doctor Professional Recommendations
-                    </h4>
-                    <div style="background: #fff8e1; padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
-            `;
-            
-            selectedRecommendations.forEach((rec, index) => {
-                reportHTML += `<p style="margin-bottom: 0.8rem;">${index + 1}. ${rec}</p>`;
-            });
-            
-            reportHTML += `
-                    </div>
-                    
-                    <div style="background: #f8f9fa; padding: 1.2rem; border-radius: 10px;">
-                        <p><strong>🔔 Reminder:</strong></p>
-                        <p>Please strictly follow the rehabilitation plan to perform training, do not rush for quick results. If you have any questions or discomfort, please contact your attending physician in time.</p>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('aiReportContent').innerHTML = reportHTML;
-            
-            // Switch to AI analysis tab
-            switchTab('analysis');
-        }
-        
-        // AI assistant Q&A
-        function askAI() {
-            const question = document.getElementById('aiQuestionInput').value;
-            if (!question.trim()) return;
-            
-            // Add user question
-            const contentDiv = document.getElementById('aiDialogContent');
-            const userMessage = document.createElement('div');
-            userMessage.className = 'doctor-message';
-            userMessage.innerHTML = `
-                <div class="message">${question}</div>
-                <div class="doctor-avatar">R</div>
-            `;
-            contentDiv.appendChild(userMessage);
-            
-            // Simulate AI response
-            setTimeout(() => {
-                const aiMessage = document.createElement('div');
-                aiMessage.className = 'ai-message';
-                aiMessage.innerHTML = `
-                    <div class="ai-avatar">AI</div>
-                    <div class="message">Thank you for your question. Regarding "${question}", I suggest you refer to the relevant technical documentation or contact the technical support team for more detailed assistance.</div>
-                `;
-                contentDiv.appendChild(aiMessage);
-                contentDiv.scrollTop = contentDiv.scrollHeight;
-            }, 1000);
-            
-            // Clear input
-            document.getElementById('aiQuestionInput').value = '';
-            contentDiv.scrollTop = contentDiv.scrollHeight;
-        }
-        
-        // Initialize after page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize probability distribution chart (empty chart)
-            const probCtx = document.getElementById('probabilityChart').getContext('2d');
-            probabilityChart = new Chart(probCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['No Data'],
-                    datasets: [{
-                        data: [100],
-                        backgroundColor: ['#95a5a6'],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: {
-                                    size: 12
-                                },
-                                padding: 20
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Angle Classification Probability Distribution',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Initialize waveform chart (empty chart)
-            const waveCtx = document.getElementById('waveformChart').getContext('2d');
-            waveformChart = new Chart(waveCtx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Current Value (A)',
-                        data: [],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Time Point'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Current Value (A)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Waveform Data Visualization',
-                            font: {
-                                size: 16
-                            },
-                            padding: {
-                                top: 10,
-                                bottom: 20
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Initialize training charts
-            initTrainingCharts();
-            
-            // Add enter key event for AI assistant input
-            document.getElementById('aiQuestionInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    askAI();
-                }
-            });
-        });
-    </script>
+    <script src="/static/js/script_en.js"></script>
 </body>
 </html>

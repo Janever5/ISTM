@@ -567,6 +567,13 @@ function renderVisualizationChart(labels, data, xAxisLabel, yAxisLabel) {
 }
 
 
+// 切换分割模式（手动/等分）
+function toggleSplitMode() {
+    const mode = document.querySelector('input[name="splitMode"]:checked').value;
+    document.getElementById('split-manual-section').style.display = mode === 'manual' ? 'block' : 'none';
+    document.getElementById('split-equal-section').style.display = mode === 'equal' ? 'block' : 'none';
+}
+
 // 分割配置
 function confirmSegmentCount() {
     const segmentCount = parseInt(document.getElementById('segmentCount').value);

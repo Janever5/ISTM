@@ -276,7 +276,7 @@ def train():
                         with open(default_scaler_path, "rb") as f:
                             scaler = pickle.load(f)
                             
-            except Exception as e:
+            except Exception as e:  
                 training_status['status'] = 'error'
                 training_status['message'] = f'训练出错: {str(e)}'
                 training_status['logs'].append(f'❌ 训练出错: {str(e)}')
@@ -721,6 +721,37 @@ def api_preview_split():
         logger.error(f"分割预览时出错: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/preview_waveform', methods=['POST'])
+def api_preview_waveform():
+    """上传单个文件，返回处理前后的波形用于预览"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': '没有文件被上传'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': '没有选择文件'})
+
+    temp_path = os.path.join(app.config['TEMP_FOLDER'], f"preview_{uuid.uuid4()}_{secure_filename(file.filename)}")
+    
+    try:
+        file.save(temp_path)
+        
+        # 使用更新后的QTBFSScorer来处理单个文件
+        scorer = QTBFSScorer()
+        result = scorer._process_single_file(temp_path)
+        
+        if result and 'vis_data' in result:
+            return jsonify({'success': True, 'data': result['vis_data']})
+        else:
+            return jsonify({'success': False, 'error': '无法处理文件或提取特征'})
+            
+    except Exception as e:
+        logger.error(f"预览波形时出错: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
 def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=None, loaded_scaler=None, label_names=None):
     """对单个波形文件进行分类预测"""
     
@@ -782,38 +813,6 @@ def predict_waveform(file_path, model_path=None, scaler_path=None, loaded_model=
         win_mean = np.convolve(seq, np.ones(5)/5, mode='same')  # 平滑
         
         # 新增特征 - 对区分速度很重要
-
-@app.route('/api/preview_waveform', methods=['POST'])
-def api_preview_waveform():
-    """上传单个文件，返回处理前后的波形用于预览"""
-    if 'file' not in request.files:
-        return jsonify({'success': False, 'error': '没有文件被上传'})
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'success': False, 'error': '没有选择文件'})
-
-    temp_path = os.path.join(app.config['TEMP_FOLDER'], f"preview_{uuid.uuid4()}_{secure_filename(file.filename)}")
-    
-    try:
-        file.save(temp_path)
-        
-        # 使用更新后的QTBFSScorer来处理单个文件
-        scorer = QTBFSScorer()
-        result = scorer._process_single_file(temp_path)
-        
-        if result and 'vis_data' in result:
-            return jsonify({'success': True, 'data': result['vis_data']})
-        else:
-            return jsonify({'success': False, 'error': '无法处理文件或提取特征'})
-            
-    except Exception as e:
-        logger.error(f"预览波形时出错: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'error': str(e)})
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
         # 1. 过零率（反映运动频率）
         zero_crossings = np.where(np.diff(np.signbit(seq - np.mean(seq))))[0]
         zero_cross_rate = len(zero_crossings) / len(seq)
@@ -874,7 +873,7 @@ def download_file(filename):
 
 if __name__ == '__main__':
     logger.info("膝关节康复角度波形分类系统后端服务器启动中...")
-    logger.info("请访问 http://localhost:5000 查看前端界面")
-    logger.info("访问 http://localhost:5000?lang=en 查看英文界面")
+    logger.info("请访问 http://localhost:5002 查看前端界面")
+    logger.info("访问 http://localhost:5002?lang=en 查看英文界面")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)
