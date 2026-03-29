@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Janus Sensor 论文出图 V2</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.3/viewer.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.3/viewer.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;padding:20px;color:#333}
+.container{max-width:1140px;margin:0 auto}
+h1{text-align:center;color:#fff;font-size:26px;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.subtitle{text-align:center;color:rgba(255,255,255,.75);font-size:13px;margin-bottom:24px}
+
+/* 全局设置面板 */
+.global-panel{background:linear-gradient(135deg,#ffecd2,#fcb69f);border-radius:14px;padding:20px 24px;margin-bottom:24px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.global-panel h2{color:#c0392b;font-size:17px;margin-bottom:12px}
+.gp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.gp-item{display:flex;flex-direction:column;gap:3px}
+.gp-item label{font-size:12px;font-weight:600;color:#555}
+.gp-item input{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;width:100%;background:#fff}
+
+.card{background:#fff;border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.card h2{color:#0C5DA5;font-size:18px;margin-bottom:4px}
+.card .badge{display:inline-block;background:#e8f4f8;color:#0C5DA5;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:600}
+.card .desc{color:#666;font-size:12.5px;margin:6px 0 12px;line-height:1.7}
+.card .need{background:#FFF8E1;border-left:4px solid #F0C000;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:#795548;margin-bottom:14px}
+.card .value{background:#E8F5E9;border-left:4px solid #00B945;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:#2E7D32;margin-bottom:14px}
+
+.file-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.file-row label{font-size:12.5px;color:#333;min-width:90px;font-weight:600}
+input[type="file"]{font-size:12px;padding:5px;border:2px dashed #ccc;border-radius:8px;cursor:pointer;transition:.3s}
+input[type="file"]:hover{border-color:#0C5DA5}
+input[type="text"],input[type="number"]{padding:7px 10px;border:1px solid #ddd;border-radius:7px;font-size:12.5px}
+
+.btn{background:linear-gradient(135deg,#0C5DA5,#08406F);color:#fff;border:none;padding:11px 28px;border-radius:9px;font-size:14px;font-weight:bold;cursor:pointer;transition:.3s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(0,0,0,.2)}
+.btn:disabled{background:#aaa;cursor:not-allowed;transform:none}
+.btn .sp{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.btn.ld .sp{display:inline-block}
+.btn.ld span{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 波形预览容器 */
+.waveform-container{width:100%;margin:12px 0;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;padding:10px;text-align:center}
+.waveform-container img{max-width:100%;height:auto;display:block;margin:0 auto;cursor:zoom-in;transition:transform 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.waveform-container img:hover{transform:scale(1.01)}
+
+/* 时间选择 */
+.time-select{background:#f3f0ff;border:1px solid #d0c4f7;border-radius:8px;padding:12px 16px;margin:10px 0;display:none}
+.time-select h4{font-size:13px;color:#5B21B6;margin-bottom:8px}
+.time-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.time-row label{font-size:12px;font-weight:600;color:#555}
+.time-row input{width:100px;padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:12px}
+
+.result{margin-top:14px;display:none}
+.result .dl{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.result .dl a{background:#f0f7ff;color:#0C5DA5;padding:7px 14px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:600;transition:.3s}
+.result .dl a:hover{background:#d6eaff}
+.result .stats{background:#f8f9fa;padding:12px;border-radius:8px;margin-top:8px;font-size:12px;font-family:Consolas,monospace;white-space:pre-wrap;max-height:180px;overflow-y:auto}
+.err{background:#FFF0F0;border-left:4px solid #FF2C00;color:#b71c1c;padding:10px;border-radius:0 8px 8px 0;margin-top:10px;font-size:12.5px;display:none}
+
+.hm-grid{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:14px}
+.hm-grid .hd{font-weight:bold;text-align:center;font-size:12.5px;color:#0C5DA5}
+.hm-grid .rl{font-weight:bold;font-size:12.5px}
+
+.zoom-hint{font-size:11px;color:#888;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔬 Janus Sensor 论文出图平台 V2</h1>
+<p class="subtitle">面向韧带修复与康复监测 · 传感数据分析与论文 Figure 生成 · 支持 CSV / Excel</p>
+
+<!-- ===== 全局绘图设置 ===== -->
+<div class="global-panel">
+  <h2>⚙️ 全局绘图参数设置 <span style="font-size:12px;font-weight:normal;color:#888">（修改后对所有图生效）</span></h2>
+  <div class="gp-grid">
+    <div class="gp-item"><label>字体家族</label><input type="text" id="gs_font_family" value="Arial"></div>
+    <div class="gp-item"><label>坐标轴标签字号</label><input type="number" id="gs_axis_label_size" value="48" min="8" max="72"></div>
+    <div class="gp-item"><label>刻度数字字号</label><input type="number" id="gs_tick_label_size" value="36" min="6" max="60"></div>
+    <div class="gp-item"><label>图例字号</label><input type="number" id="gs_legend_size" value="32" min="6" max="50"></div>
+    <div class="gp-item"><label>标题字号</label><input type="number" id="gs_title_size" value="48" min="8" max="72"></div>
+    <div class="gp-item"><label>数据线宽</label><input type="number" id="gs_line_width" value="10.0" min="0.3" max="15" step="0.1"></div>
+    <div class="gp-item"><label>外框线宽</label><input type="number" id="gs_frame_width" value="4.0" min="0.5" max="10" step="0.1"></div>
+    <div class="gp-item"><label>刻度线宽</label><input type="number" id="gs_tick_width" value="2.0" min="0.3" max="6" step="0.1"></div>
+    <div class="gp-item"><label>主刻度长度</label><input type="number" id="gs_tick_length" value="8" min="2" max="20" step="1"></div>
+    <div class="gp-item"><label>副刻度长度</label><input type="number" id="gs_minor_tick_length" value="4" min="1" max="15" step="1"></div>
+    <div class="gp-item"><label>输出 DPI</label><input type="number" id="gs_dpi" value="600" min="150" max="1200" step="50"></div>
+  </div>
+</div>
+
+<!-- ===== 图1: 波形预览 ===== -->
+<div class="card">
+  <h2>📊 图1：波形预览与数据检查 <span class="badge">自检用</span></h2>
+  <div class="value">📌 <b>论文价值：</b>不直接放入论文，用于确认数据读取正确、峰值检测准确、预处理效果合理。是后续所有出图的基础。</div>
+  <div class="need">📁 上传 <b>1个</b> 数据文件（CSV 或 Excel），包含「相对时间(s)」和「R（Ω）」列</div>
+  <form id="fm-pv">
+    <div class="file-row"><label>数据文件：</label><input type="file" name="datafile" accept=".csv,.xlsx,.xls" required></div>
+    <button type="submit" class="btn" id="bt-pv"><div class="sp"></div><span>🚀 预览波形</span></button>
+  </form>
+  <div class="err" id="er-pv"></div>
+  <div class="result" id="rs-pv"></div>
+</div>
+
+<!-- ===== 图2: 标定曲线 ===== -->
+<div class="card">
+  <h2>📐 图2：角度标定曲线 <span class="badge">Fig.3(c)</span></h2>
+  <div class="value">📌 <b>论文价值：</b>证明传感器输出与弯曲角度之间的<b>线性关系</b>和<b>灵敏度（GF）</b>。R²>0.99 说明可作定量工具。审稿人必看的基础标定图。</div>
+  <div class="need">📁 上传 <b>≥2个</b> 不同角度的文件 + 填写对应角度（逗号分隔）<br>⏱️ 可选：为每个文件指定起止时间（逗号分隔，留空=全段）</div>
+  <form id="fm-cal">
+    <div class="file-row"><label>数据文件：</label><input type="file" name="datafiles" accept=".csv,.xlsx,.xls" multiple required></div>
+    <div class="file-row"><label>角度 (°)：</label><input type="text" name="angles" placeholder="如: 5,10,15,30,45,60,90" required style="width:260px"></div>
+    <div class="file-row"><label>起始时间：</label><input type="text" name="t_starts" placeholder="可选, 如: 2.0,,1.5,,," style="width:260px"></div>
+    <div class="file-row"><label>结束时间：</label><input type="text" name="t_ends" placeholder="可选, 如: 18.0,,20.0,,," style="width:260px"></div>
+    <button type="submit" class="btn" id="bt-cal"><div class="sp"></div><span>🚀 生成标定曲线</span></button>
+  </form>
+  <div class="err" id="er-cal"></div>
+  <div class="result" id="rs-cal"></div>
+</div>
+
+<!-- ===== 图3: 速度对比 ===== -->
+<div class="card">
+  <h2>⚡ 图3：速度对比 <span class="badge">Fig.3(g)</span></h2>
+  <div class="value">📌 <b>论文价值：</b>证明传感器在不同应变速率下输出一致（<b>频率无关性</b>）。植入体内时人的运动速度不断变化，传感器不能因此失真。</div>
+  <div class="need">📁 同一角度的 <b>2~3个</b> 文件（快1s/中2s/慢3s）+ 填写角度</div>
+  <form id="fm-sp">
+    <div class="file-row"><label>快速 (1s)：</label><input type="file" name="file_1s" accept=".csv,.xlsx,.xls"></div>
+    <div class="file-row" style="margin-left:100px"><label>起止时间：</label><input type="text" name="t_start_1s" placeholder="起始(s)" style="width:80px"> — <input type="text" name="t_end_1s" placeholder="结束(s)" style="width:80px"></div>
+    <div class="file-row"><label>中速 (2s)：</label><input type="file" name="file_2s" accept=".csv,.xlsx,.xls"></div>
+    <div class="file-row" style="margin-left:100px"><label>起止时间：</label><input type="text" name="t_start_2s" placeholder="起始(s)" style="width:80px"> — <input type="text" name="t_end_2s" placeholder="结束(s)" style="width:80px"></div>
+    <div class="file-row"><label>慢速 (3s)：</label><input type="file" name="file_3s" accept=".csv,.xlsx,.xls"></div>
+    <div class="file-row" style="margin-left:100px"><label>起止时间：</label><input type="text" name="t_start_3s" placeholder="起始(s)" style="width:80px"> — <input type="text" name="t_end_3s" placeholder="结束(s)" style="width:80px"></div>
+    <div class="file-row"><label>测试角度：</label><input type="text" name="angle" placeholder="如: 60" value="60" style="width:80px"></div>
+    <button type="submit" class="btn" id="bt-sp"><div class="sp"></div><span>🚀 生成速度对比图</span></button>
+  </form>
+  <div class="err" id="er-sp"></div>
+  <div class="result" id="rs-sp"></div>
+</div>
+
+<!-- ===== 图4: 疲劳 ===== -->
+<div class="card">
+  <h2>🔄 图4：循环疲劳稳定性 <span class="badge">Fig.3(h)</span></h2>
+  <div class="value">📌 <b>论文价值：</b>证明<b>长期服役可靠性</b>。CV<5%、前后保留率>95% 是审稿人判断传感器耐久性的硬指标。</div>
+  <div class="need">📁 <b>1个</b> 长时间连续循环数据文件（≥20个周期）</div>
+  <form id="fm-ft">
+    <div class="file-row"><label>数据文件：</label><input type="file" name="datafile" accept=".csv,.xlsx,.xls" required></div>
+    <div class="file-row"><label>起止时间：</label><input type="text" name="t_start" placeholder="起始(s)" style="width:80px"> — <input type="text" name="t_end" placeholder="结束(s)" style="width:80px"></div>
+    <button type="submit" class="btn" id="bt-ft"><div class="sp"></div><span>🚀 生成疲劳图</span></button>
+  </form>
+  <div class="err" id="er-ft"></div>
+  <div class="result" id="rs-ft"></div>
+</div>
+
+<!-- ===== 图5: 多State ===== -->
+<div class="card">
+  <h2>🏥 图5：多损伤状态对比 + QTBFS <span class="badge">Fig.4 核心</span></h2>
+  <div class="value">📌 <b>论文价值：</b><b>论文最核心创新图</b>——证明评分系统能区分不同损伤程度，实现康复进程的定量追踪。这是 QTBFS 的直接证据。</div>
+  <div class="need">📁 <b>≥2个</b> 不同State文件 + 对应State编号（0=健康…4=极重度）</div>
+  <form id="fm-ms">
+    <div class="file-row"><label>数据文件：</label><input type="file" name="datafiles" accept=".csv,.xlsx,.xls" multiple required></div>
+    <div class="file-row"><label>State编号：</label><input type="text" name="states" placeholder="如: 0, 1, 2, 3, 4" required style="width:200px"></div>
+    <button type="submit" class="btn" id="bt-ms"><div class="sp"></div><span>🚀 生成多State对比图</span></button>
+  </form>
+  <div class="err" id="er-ms"></div>
+  <div class="result" id="rs-ms"></div>
+</div>
+
+<!-- ===== 图6: 热力图 ===== -->
+<div class="card">
+  <h2>🌡️ 图6：3×3 热力图 <span class="badge">Fig.4(d)</span></h2>
+  <div class="value">📌 <b>论文价值：</b>用一张图展示传感器在<b>多维工况空间</b>（角度×速度）中的响应全貌，信息密度高，顶刊偏爱这种紧凑展示形式。</div>
+  <div class="need">📁 最多 <b>9个</b> 文件（3角度×3速度），放入对应格子，缺失项=0</div>
+  <form id="fm-hm">
+    <div class="hm-grid">
+      <div></div><div class="hd">Fast (1s)</div><div class="hd">Medium (2s)</div><div class="hd">Slow (3s)</div>
+      <div class="rl">30°</div>
+      <div><input type="file" name="file_30_1s" accept=".csv,.xlsx,.xls"></div>
+      <div><input type="file" name="file_30_2s" accept=".csv,.xlsx,.xls"></div>
+      <div><input type="file" name="file_30_3s" accept=".csv,.xlsx,.xls"></div>
+      <div class="rl">60°</div>
+      <div><input type="file" name="file_60_1s" accept=".csv,.xlsx,.xls"></div>
+      <div><input type="file" name="file_60_2s" accept=".csv,.xlsx,.xls"></div>
+      <div><input type="file" name="file_60_3s" accept=".csv,.xlsx,.xls"></div>
+      <div class="rl">90°</div>
+      <div><input type="file" name="file_90_1s" accept=".csv,.xlsx,.xls"></div>
+      <div><input type="file" name="file_90_2s" accept=".csv,.xlsx,.xls"></div>
+      <div><input type="file" name="file_90_3s" accept=".csv,.xlsx,.xls"></div>
+    </div>
+    <button type="submit" class="btn" id="bt-hm"><div class="sp"></div><span>🚀 生成热力图</span></button>
+  </form>
+  <div class="err" id="er-hm"></div>
+  <div class="result" id="rs-hm"></div>
+</div>
+
+<!-- ===== 图7: 相关性矩阵 ===== -->
+<div class="card">
+  <h2>🔗 图7：特征相关性矩阵 <span class="badge">Fig.4(f)</span></h2>
+  <div class="value">📌 <b>论文价值：</b>证明QTBFS三域指标的<b>正交性与互补性</b>——全相关=维度冗余，全不相关=缺乏体系性。适度相关+部分独立的矩阵结构最有说服力。</div>
+  <div class="need">📁 <b>≥5个</b> 不同条件的文件（越多越好，不同角度/速度/State全选上传）</div>
+  <form id="fm-cr">
+    <div class="file-row"><label>所有文件：</label><input type="file" name="datafiles" accept=".csv,.xlsx,.xls" multiple required></div>
+    <button type="submit" class="btn" id="bt-cr"><div class="sp"></div><span>🚀 生成相关性矩阵</span></button>
+  </form>
+  <div class="err" id="er-cr"></div>
+  <div class="result" id="rs-cr"></div>
+</div>
+
+</div><!-- /.container -->
+
+<script>
+// 获取全局样式参数
+function getStyleParams(){
+  const ids=['font_family','axis_label_size','tick_label_size','legend_size','title_size',
+             'line_width','frame_width','tick_width','tick_length',
+             'minor_tick_length','dpi'];
+  const p={};
+  ids.forEach(id=>{
+    const el=document.getElementById('gs_'+id);
+    if(el) p['style_'+id]=el.value;
+  });
+  return p;
+}
+
+function setupForm(fid, url, bid, rid, eid){
+  const form=document.getElementById(fid);
+  const btn=document.getElementById(bid);
+  const res=document.getElementById(rid);
+  const err=document.getElementById(eid);
+
+  form.addEventListener('submit', async(e)=>{
+    e.preventDefault();
+    btn.classList.add('ld'); btn.disabled=true;
+    res.style.display='none'; err.style.display='none';
+
+    const fd=new FormData(form);
+    // 注入全局样式参数
+    const sp=getStyleParams();
+    for(const[k,v] of Object.entries(sp)) fd.append(k,v);
+
+    try{
+      const r=await fetch(url,{method:'POST',body:fd});
+      const d=await r.json();
+      if(d.error){
+        err.textContent='❌ '+d.error; err.style.display='block';
+      }else{
+        let h='';
+        if(d.figure){
+              h+=`<div class="waveform-container">
+                    <img src="/figures/${d.figure}" alt="figure">
+              </div>
+                  <p class="zoom-hint">💡 点击图片可开启全屏查看：支持滚轮缩放、鼠标任意拖拽 | 下方可下载高清矢量版</p>`;
+        }
+        // 如果是预览图，显示时间范围提示
+        if(d.time_min!==undefined){
+          h+=`<div style="background:#e8f0fe;padding:10px;border-radius:8px;margin:8px 0;font-size:12.5px">
+                ℹ️ 处理后时间范围: <b>${d.time_min}s</b> ~ <b>${d.time_max}s</b>
+                <br>在后续出图中，你可以在对应的「起止时间」输入框中填写你想截取的时间段
+              </div>`;
+        }
+        h+='<div class="dl">';
+        if(d.figure) h+=`<a href="/figures/${d.figure}" download>📥 PNG</a>`;
+        if(d.svg) h+=`<a href="/figures/${d.svg}" download>📥 SVG (矢量可编辑)</a>`;
+        if(d.features_csv) h+=`<a href="/figures/${d.features_csv}" download>📥 特征 CSV</a>`;
+        h+='</div>';
+        const st=d.stats||d.calibration||d.info||d.features||d.correlations;
+        if(st) h+=`<div class="stats">${JSON.stringify(st,null,2)}</div>`;
+        res.innerHTML=h; res.style.display='block';
+            
+            // 图片渲染到页面后，初始化 Viewer.js
+            if(d.figure){
+              const imgEl = res.querySelector('.waveform-container img');
+              if(imgEl){
+                new Viewer(imgEl, {
+                  inline: false,
+                  toolbar: true,
+                  zoomRatio: 0.2
+                });
+              }
+            }
+      }
+    }catch(ex){
+      err.textContent='❌ 网络错误: '+ex.message; err.style.display='block';
+    }finally{
+      btn.classList.remove('ld'); btn.disabled=false;
+    }
+  });
+}
+
+setupForm('fm-pv','/plot/preview','bt-pv','rs-pv','er-pv');
+setupForm('fm-cal','/plot/calibration','bt-cal','rs-cal','er-cal');
+setupForm('fm-sp','/plot/speed_comparison','bt-sp','rs-sp','er-sp');
+setupForm('fm-ft','/plot/fatigue','bt-ft','rs-ft','er-ft');
+setupForm('fm-ms','/plot/multi_state','bt-ms','rs-ms','er-ms');
+setupForm('fm-hm','/plot/heatmap','bt-hm','rs-hm','er-hm');
+setupForm('fm-cr','/plot/correlation','bt-cr','rs-cr','er-cr');
+</script>
+</body>
+</html>
